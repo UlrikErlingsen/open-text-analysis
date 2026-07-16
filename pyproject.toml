@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "textsignal"
-version = "1.1.0"
+version = "1.1.1"
 description = "TextSignal: local-first exploratory text evidence and topic diagnostics"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -32,6 +32,7 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Information Analysis",
 ]
 dependencies = [
+  "defusedxml>=0.7,<1",
   "numpy>=1.24,<3",
   "openpyxl>=3.1,<4",
   "pandas>=2.0,<3",
