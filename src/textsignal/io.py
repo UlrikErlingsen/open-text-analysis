@@ -94,10 +94,11 @@ def _safe_cell(value: object) -> object:
 
 
 def safe_frame(frame: pd.DataFrame) -> pd.DataFrame:
-    """Neutralize spreadsheet formulas in object cells without changing numbers."""
+    """Neutralize spreadsheet formulas in object cells and column headers."""
     result = frame.copy()
     for column in result.select_dtypes(include=["object", "string"]).columns:
         result[column] = result[column].map(_safe_cell)
+    result.columns = [_safe_cell(str(column)) for column in result.columns]
     return result
 
 
