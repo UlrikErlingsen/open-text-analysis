@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "textsignal"
-version = "1.0.0"
+version = "1.1.0"
 description = "TextSignal: local-first exploratory text evidence and topic diagnostics"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -17,6 +17,7 @@ keywords = [
   "non-negative matrix factorization",
   "topic stability",
   "lexical keyness",
+  "sentiment validation",
   "open-ended feedback",
   "marketing analytics",
   "streamlit",
@@ -38,6 +39,7 @@ dependencies = [
   "scipy>=1.10,<2",
   "scikit-learn>=1.4,<2",
   "streamlit>=1.38,<2",
+  "vaderSentiment>=3.3,<4",
 ]
 
 [project.optional-dependencies]

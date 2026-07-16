@@ -16,6 +16,8 @@ longitudinal collections require a design that respects dependence.
 Declare one text column and, when available, a unique document ID. A group column is optional. The lexical contrast uses
 exactly two chosen group values and withholds results when either has fewer than 20 non-blank documents.
 
+For sentiment tracking, optionally provide a date/time column plus source, platform, brand, or other comparison fields. A human-label column may contain `negative`, `neutral`, and `positive` labels for local validation. Label a documented sample without seeing the automated result; include difficult, ironic, mixed, domain-specific, and platform-specific examples. Keep source inclusion and review-collection rules stable across periods before reading a trend.
+
 ## Before loading data
 
 Remove names, email addresses, phone numbers, account IDs, URLs with tokens, private case details, and unnecessary
@@ -35,6 +37,6 @@ them makes a preferred topic solution look cleaner. Preserve every choice in the
 
 ## Corpus size
 
-Version 1.0 requires at least `max(80, 20 × planned topics)` non-blank texts and at least 30 surviving terms. Those are
+Version 1.1 requires at least `max(80, 20 × planned topics)` non-blank texts and at least 30 surviving terms for topic analysis. Those are
 software guardrails, not guarantees of adequacy. Text length, lexical diversity, imbalance, templating, topic rarity,
 sampling, and the intended codebook use all matter.

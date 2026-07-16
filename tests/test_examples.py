@@ -16,5 +16,14 @@ def test_demo_is_deterministic_original_and_unique() -> None:
 
 def test_starter_template_exposes_document_group_and_text_roles() -> None:
     template = starter_template()
-    assert list(template.columns) == ["document_id", "comparison_group", "open_text"]
+    assert list(template.columns) == [
+        "document_id",
+        "comparison_group",
+        "recorded_at",
+        "source",
+        "platform",
+        "brand",
+        "human_sentiment",
+        "open_text",
+    ]
     assert len(template) == 4

@@ -45,14 +45,21 @@ def demo_dataframe(seed: int = 260716) -> pd.DataFrame:
         secondary = int(rng.choice([topic for topic in range(3) if topic != primary]))
         subject, action, note = topic_parts[primary]
         secondary_subject, secondary_action, _ = topic_parts[secondary]
+        selected_note = str(rng.choice(note))
         sentence = (
-            f"{rng.choice(contexts).capitalize()}, the {rng.choice(subject)} helps me {rng.choice(action)}, and {rng.choice(note)}. "
+            f"{rng.choice(contexts).capitalize()}, the {rng.choice(subject)} helps me {rng.choice(action)}, and {selected_note}. "
             f"{rng.choice(qualifiers)}, I also check the {rng.choice(secondary_subject)} so I can {rng.choice(secondary_action)}."
         )
+        human_sentiment = "negative" if any(word in selected_note for word in ("crowded", "unclear", "need")) else "positive"
         rows.append(
             {
                 "response_id": f"TX-{index + 1:04d}",
                 "user_stage": stage,
+                "recorded_at": (pd.Timestamp("2025-01-01") + pd.to_timedelta(int(index), unit="D")).date().isoformat(),
+                "source": "Survey" if index % 3 else "Review",
+                "platform": "Web" if index % 2 else "Mobile",
+                "brand": "Northstar" if index % 4 else "Harbor",
+                "human_sentiment": human_sentiment,
                 "open_response": sentence,
             }
         )
@@ -76,6 +83,15 @@ def demo_defaults() -> dict[str, object]:
         "top_terms": 12,
         "assignment_threshold": 0.45,
         "stability_iterations": 8,
+        "sentiment_enabled": True,
+        "time_column": "recorded_at",
+        "time_grain": "month",
+        "sentiment_dimensions": ["source", "platform", "brand"],
+        "human_label_column": "human_sentiment",
+        "positive_label": "positive",
+        "negative_label": "negative",
+        "neutral_label": None,
+        "voluntary_reviews": True,
         "research_question": "Which recurring language patterns in fictional interface feedback deserve a human codebook test?",
         "corpus_definition": "One fictional open-ended response per independent prototype evaluator.",
         "intended_use": "Generate auditable coding hypotheses; no individual classification, sentiment score, or automated customer decision.",
@@ -90,6 +106,11 @@ def starter_template() -> pd.DataFrame:
         {
             "document_id": ["D001", "D002", "D003", "D004"],
             "comparison_group": ["Group A", "Group B", "Group A", "Group B"],
+            "recorded_at": ["2026-01-01", "2026-01-02", "2026-02-01", "2026-02-02"],
+            "source": ["Survey", "Review", "Survey", "Review"],
+            "platform": ["Web", "Mobile", "Web", "Mobile"],
+            "brand": ["Brand A", "Brand A", "Brand B", "Brand B"],
+            "human_sentiment": ["positive", "negative", "neutral", "positive"],
             "open_text": ["", "", "", ""],
         }
     )

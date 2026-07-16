@@ -130,8 +130,34 @@ def build_evidence_pack(
     audit,
     analysis,
     decision: dict[str, str],
+    sentiment=None,
 ) -> dict[str, object]:
     """Build a privacy-minimized record without source text, snippets, or row assignments."""
+    tables = {
+        "length_distribution": audit.length_distribution,
+        "group_distribution": audit.group_distribution,
+        "vocabulary": analysis.vocabulary,
+        "topic_count_comparison": analysis.retention,
+        "topic_terms": analysis.topics,
+        "topic_prevalence": analysis.topic_prevalence,
+        "group_lexical_contrast": analysis.group_contrast,
+    }
+    sentiment_record = None
+    if sentiment is not None:
+        sentiment_record = {
+            "config": asdict(sentiment.config),
+            "validation": sentiment.validation_summary,
+            "warnings": list(sentiment.warnings),
+        }
+        tables.update(
+            {
+                "sentiment_overall": sentiment.overall,
+                "sentiment_time": sentiment.time_summary,
+                "sentiment_dimensions": sentiment.dimension_summary,
+                "sentiment_validation": sentiment.validation_by_class,
+                "sentiment_confusion": sentiment.confusion,
+            }
+        )
     return {
         "schema": "textsignal.evidence.v1",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -152,15 +178,8 @@ def build_evidence_pack(
         "analysis_diagnostics": analysis.diagnostics,
         "analysis_warnings": list(analysis.warnings),
         "decision": decision,
-        "tables": {
-            "length_distribution": audit.length_distribution,
-            "group_distribution": audit.group_distribution,
-            "vocabulary": analysis.vocabulary,
-            "topic_count_comparison": analysis.retention,
-            "topic_terms": analysis.topics,
-            "topic_prevalence": analysis.topic_prevalence,
-            "group_lexical_contrast": analysis.group_contrast,
-        },
+        "sentiment_evidence": sentiment_record,
+        "tables": tables,
         "privacy_note": (
             "No source text, context snippets, document identifiers, or document-level topic assignments are included. "
             "Aggregate terms can still disclose sensitive vocabulary and must be reviewed before sharing."

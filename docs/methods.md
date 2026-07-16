@@ -104,7 +104,15 @@ with approximate variance
 The z score ranks descriptive lexical differences. It is not a causal test and does not correct for sample design,
 confounding, document length mechanisms, multiple research choices, or population selection.
 
-## 7. Context and human handoff
+## 7. Sentiment signals and local validation
+
+The optional sentiment page applies the public VADER rule-based lexicon to each declared document and retains its compound score plus positive, neutral, and negative proportions in memory. It reports only aggregate trends, dimension comparisons, and validation tables. VADER was designed for social-media-style English and may not transfer to another language, domain, platform, brand vocabulary, irony pattern, or document length.
+
+When a human-label column is supplied, TextSignal maps the compound score to negative, neutral, or positive with declared VADER thresholds and reports a confusion matrix, per-class precision/recall/F1, balanced accuracy, and macro F1. The human labels are a local reference, not infallible truth. The status remains `UNVALIDATED LEXICON SIGNAL` without labels, becomes `VALIDATION LIMITED` when support is too thin, and only becomes `LOCALLY SUPPORTED` when the declared local diagnostics clear the product rules. Weak diagnostics produce `MODEL DOES NOT TRANSFER`.
+
+Time, source, platform, and brand comparisons are descriptive conditional summaries. Voluntary reviews can overrepresent unusually positive or negative experiences; duplicated or syndicated reviews can overweight repeated language. TextSignal warns about both and makes no population or causal claim.
+
+## 8. Context and human handoff
 
 The three highest-weight texts per component are shown with common email, URL, and phone patterns masked. This is an
 inspection aid, not anonymization. Snippets remain session-only and are excluded from exports.
@@ -116,5 +124,5 @@ validity on held-out or new text.
 ## Public references
 
 See the full bibliography and DOI links in the README. Core foundations are Salton and Buckley (1988), Lee and Seung
-(1999), Monroe et al. (2008), Grimmer and Stewart (2013), Greene et al. (2014), Belford et al. (2018), and Berger et al.
-(2020).
+(1999), Monroe et al. (2008), Grimmer and Stewart (2013), Greene et al. (2014), Belford et al. (2018), Berger et al.
+(2020), and Hutto and Gilbert (2014) for VADER.

@@ -2,9 +2,14 @@
   <img src="assets/textsignal-banner.svg" alt="TextSignal — what are people actually saying, and does the pattern hold?" width="100%">
 </p>
 
-# TextSignal
+<p align="center">
+  <a href="https://github.com/UlrikErlingsen/open-text-analysis/actions/workflows/tests.yml"><img alt="Tests" src="https://github.com/UlrikErlingsen/open-text-analysis/actions/workflows/tests.yml/badge.svg"></a>
+  <img alt="Python 3.10+" src="https://img.shields.io/badge/Python-3.10%2B-173C3A?logo=python&logoColor=white">
+  <img alt="Streamlit" src="https://img.shields.io/badge/Streamlit-app-D95B40?logo=streamlit&logoColor=white">
+  <a href="LICENSE"><img alt="License: AGPL-3.0-or-later" src="https://img.shields.io/badge/License-AGPL--3.0--or--later-36534E"></a>
+</p>
 
-**Open-text evidence—define the corpus, stress the patterns, hand interpretation back to people.**
+<p align="center"><strong>Open-text evidence — define the corpus, stress the patterns, hand interpretation back to people.</strong></p>
 
 TextSignal is a local-first Streamlit workbench for exploratory analysis of open-ended responses. It combines a written
 corpus contract, depth and duplication audits, transparent TF–IDF vocabulary, optional two-group lexical contrast,
@@ -15,9 +20,13 @@ The central question is narrow:
 
 > What recurring language patterns appear in this declared corpus, and are they stable enough to seed a human codebook test?
 
-It does not answer “what people really mean,” automate thematic analysis, score sentiment, or validate a coding scheme.
+It does not answer “what people really mean,” automate thematic analysis, or treat automated sentiment as truth. An optional VADER signal can be compared over declared time/source/platform/brand fields and tested against local human labels.
 
-## Why it exists
+## Read this first
+
+> **TextSignal finds descriptive language patterns; it does not discover ground truth.** Corpus selection, duplicated or coordinated text, preprocessing, model instability, ambiguous language, and human interpretation remain visible. Dictionary sentiment is always labeled as an automated signal and never presented as truth—even after local validation.
+
+## Try it in three minutes
 
 Open-text analysis often jumps from a word cloud or one topic-model run to confident labels. TextSignal adds friction where
 friction improves evidence:
@@ -29,7 +38,7 @@ friction improves evidence:
 5. Read high-weight examples in best-effort masked context and record rival interpretations.
 6. Export aggregate evidence, then test a frozen codebook with blinded human coders on held-out or new text.
 
-## What version 1.0 does
+## Supported scope
 
 - CSV, XLSX, JSON, and one-document-per-line TXT import;
 - one open-text column, optional document ID, and optional two-group contrast;
@@ -40,14 +49,17 @@ friction improves evidence:
 - 80% document subsampling, cosine similarity, and Hungarian alignment to the full-corpus topics;
 - informative-Dirichlet smoothed log-odds group contrast;
 - masked context inspection and a per-topic human interpretation register;
+- optional VADER sentiment signals by time, source, platform, brand, or another declared dimension;
+- local validation against human sentiment labels with confusion, class precision/recall/F1, balanced accuracy, and macro F1;
+- voluntary-review selection and exact-normalized-duplication warnings;
 - JSON, XLSX, and CSV-ZIP aggregate evidence packs.
 
-It does **not** perform language detection, stemming, lemmatization, sentiment, embeddings, BERTopic, LLM summaries,
+It does **not** perform language detection, stemming, lemmatization, embeddings, BERTopic, LLM summaries,
 supervised classification, individual decisions, causal inference, representative-population inference, coder agreement,
-or qualitative validation. Repeated, nested, conversational, longitudinal, very short, multilingual, or highly templated
+or qualitative validation. Dictionary sentiment remains an unvalidated lexical signal unless human-labelled examples from the intended corpus support transfer; even then it is not ground truth. Repeated, nested, conversational, longitudinal, very short, multilingual, or highly templated
 text may need a design-specific method outside this release.
 
-## Quick start
+## Run locally
 
 macOS:
 
@@ -110,7 +122,7 @@ masked snippets, document identifiers, and document-level topic assignments. Agg
 sensitive language, so every export requires human review before sharing. Context masking covers common email, URL, and
 phone formats only; it is not de-identification. See [PRIVACY.md](PRIVACY.md) and [SECURITY.md](SECURITY.md).
 
-## Public methodological foundations
+## Method references
 
 TextSignal implements established public methods independently:
 
@@ -128,15 +140,19 @@ TextSignal implements established public methods independently:
   *Expert Systems with Applications, 91*, 159–169. https://doi.org/10.1016/j.eswa.2017.08.047
 - Berger, J., Humphreys, A., Ludwig, S., Moe, W. W., Netzer, O., & Schweidel, D. A. (2020). Uniting the tribes:
   Using text for marketing insight. *Journal of Marketing, 84*(1), 1–25. https://doi.org/10.1177/0022242919873106
+- Hutto, C. J., & Gilbert, E. (2014). VADER: A parsimonious rule-based model for sentiment analysis of social media text.
+  *Proceedings of the International AAAI Conference on Web and Social Media, 8*(1), 216–225. https://doi.org/10.1609/icwsm.v8i1.14550
 
 Equations and implementation details are in [methods](docs/methods.md). The literature is cited, not copied.
 
-## Originality
+## Originality and license
 
 TextSignal's workflow, interface, prose, evidence statuses, synthetic data, visual identity, export schema, and code are
 original to this project, independently written from the published text-analysis literature. The project does not
 reproduce lecture wording, slides, cases, examples, diagrams, exercises, screenshots, or institution branding. See
 [sources and originality](docs/sources-and-originality.md).
+
+The software and documentation are free under **AGPL-3.0-or-later**. The license covers this project's expression, not ownership of the cited public methods.
 
 ## No install? Give this file to an AI
 
@@ -151,7 +167,7 @@ Don't want to install anything? [AI_ANALYST.md](AI_ANALYST.md) is a single copy-
 .venv/bin/python scripts/generate_examples.py
 ```
 
-## Relationship to the Signal tools
+## Relationship to the Signal suite
 
 These apps share a visual language but answer different questions:
 
@@ -165,11 +181,10 @@ These apps share a visual language but answer different questions:
 - **[MeasureSignal](https://github.com/UlrikErlingsen/measurement-validation)** asks whether a multi-item score measures what you think it does.
 - **[ExperimentSignal](https://github.com/UlrikErlingsen/experiment-analysis)** asks whether a randomized treatment caused a change worth acting on.
 - **[GateSignal](https://github.com/UlrikErlingsen/launch-decision-gate)** asks whether a concept should receive the next bounded investment.
+- **[RecommendSignal](https://github.com/UlrikErlingsen/recommender-evaluation)** compares recommendation policies offline before a finalist is tested live.
 - **TextSignal** asks what recurring language patterns appear in a declared corpus of open-ended responses.
 
 TextSignal is for open-ended language. It should not be used to turn text into an unvalidated numeric score for the
 numeric downstream tools.
 
-## License
-
-AGPL-3.0-or-later. The license covers this software's expression, not ownership of the cited public methods.
+The maintained public suite is listed at [ulrikerlingsen.com](https://ulrikerlingsen.com).

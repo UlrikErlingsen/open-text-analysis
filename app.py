@@ -33,6 +33,7 @@ from textsignal.io import (
     evidence_to_json,
     read_table,
 )
+from textsignal.sentiment import SentimentConfig, analyze_sentiment
 
 
 PAGES = [
@@ -40,8 +41,9 @@ PAGES = [
     "1 · Text contract",
     "2 · Corpus audit",
     "3 · Lexical contrast",
-    "4 · Topics & context",
-    "5 · Decision & export",
+    "4 · Sentiment tracking",
+    "5 · Topics & context",
+    "6 · Decision & export",
     "Methods & limits",
 ]
 COLORS = {
@@ -147,7 +149,7 @@ def show_error(exc: Exception) -> None:
 
 
 def reset_results() -> None:
-    for key in ("audit", "analysis", "decision", "interpretation_register"):
+    for key in ("audit", "analysis", "sentiment", "decision", "interpretation_register"):
         st.session_state.pop(key, None)
 
 
@@ -175,8 +177,8 @@ def masthead() -> None:
 
 def footer() -> None:
     st.markdown(
-        f'<div class="ts-footer">TextSignal {__version__} <span>◆</span> local-first <span>◆</span> '
-        "transparent NLP <span>◆</span> interpretation remains human</div>",
+        f'<div class="ts-footer">TextSignal v{__version__} <span>◆</span> descriptive patterns; automated sentiment '
+        "is never truth <span>◆</span> Part of the Signal suite <span>◆</span> AGPL-3.0-or-later</div>",
         unsafe_allow_html=True,
     )
 
@@ -235,9 +237,9 @@ def render_welcome() -> None:
     )
     st.markdown("### A deliberately bounded release")
     st.write(
-        "TextSignal 1.0 analyzes English or deliberately preprocessed open-ended responses with TF–IDF, transparent "
-        "non-negative matrix factorization, perturbation stability, and optional two-group lexical contrast. It does "
-        "not perform sentiment scoring, language detection, embeddings, generative summarization, supervised "
+        "TextSignal 1.1 analyzes English or deliberately preprocessed open-ended responses with TF–IDF, transparent "
+        "non-negative matrix factorization, perturbation stability, optional two-group lexical contrast, and optional "
+        "sentiment tracking with local human-label validation. It does not treat lexicon sentiment as truth and does not perform language detection, embeddings, generative summarization, supervised "
         "classification, causal inference, or qualitative interpretation on the researcher's behalf."
     )
     if "data" not in st.session_state:
@@ -298,6 +300,61 @@ def render_contract() -> None:
             index=index_of(reference_options, current.get("reference_group")), key="reference_group"
         )
 
+    with st.expander("Sentiment tracking and declared comparisons · optional", expanded=bool(current.get("sentiment_enabled", False))):
+        sentiment_enabled = st.checkbox(
+            "Enable fixed English lexicon scoring", bool(current.get("sentiment_enabled", False)), key="sentiment_enabled"
+        )
+        s1, s2, s3 = st.columns(3)
+        with s1:
+            time_choice = st.selectbox(
+                "Timestamp column", optional, index=index_of(optional, current.get("time_column") or "(none)"),
+                help="Used only for aggregate trend summaries.",
+            )
+            time_grain = st.selectbox(
+                "Time grain", ["day", "week", "month", "quarter"],
+                index=index_of(["day", "week", "month", "quarter"], current.get("time_grain", "month")),
+            )
+        with s2:
+            dimension_options = [column for column in columns if column != text_column]
+            sentiment_dimensions = st.multiselect(
+                "Source, platform, brand, or other comparisons",
+                dimension_options,
+                default=[item for item in current.get("sentiment_dimensions", []) if item in dimension_options],
+                max_selections=4,
+                help="Each dimension is summarized separately to avoid a sparse cross-product.",
+            )
+            voluntary_reviews = st.checkbox(
+                "Corpus includes voluntary public reviews", bool(current.get("voluntary_reviews", False))
+            )
+        with s3:
+            label_choice = st.selectbox(
+                "Human-coded sentiment label", optional,
+                index=index_of(optional, current.get("human_label_column") or "(none)"),
+                help="Without this, sentiment remains an unvalidated lexicon signal.",
+            )
+        label_values: list[str] = []
+        if label_choice != "(none)":
+            label_values = sorted(frame[label_choice].dropna().astype(str).unique().tolist(), key=str.casefold)
+        l1, l2, l3 = st.columns(3)
+        negative_label = l1.selectbox(
+            "Human negative label", label_values or ["(not used)"],
+            index=index_of(label_values or ["(not used)"], current.get("negative_label")),
+        )
+        positive_options = [value for value in label_values if value != negative_label] or ["(not used)"]
+        positive_label = l2.selectbox(
+            "Human positive label", positive_options,
+            index=index_of(positive_options, current.get("positive_label")),
+        )
+        neutral_options = ["(none)", *[value for value in label_values if value not in {negative_label, positive_label}]]
+        neutral_label = l3.selectbox(
+            "Human neutral label", neutral_options,
+            index=index_of(neutral_options, current.get("neutral_label") or "(none)"),
+        )
+        st.caption(
+            "VADER is a fixed English social-text rule, not a truth engine. Local human-label validation determines "
+            "whether its scores are usable for this corpus and purpose."
+        )
+
     with st.expander("Advanced stability and assignment rules"):
         a1, a2, a3 = st.columns(3)
         assignment_threshold = a1.slider("Dominant-topic threshold", 0.30, 0.80, float(current.get("assignment_threshold", 0.45)), 0.01)
@@ -331,6 +388,15 @@ def render_contract() -> None:
             "assignment_threshold": float(assignment_threshold),
             "stability_iterations": int(stability_iterations),
             "seed": int(seed),
+            "sentiment_enabled": bool(sentiment_enabled),
+            "time_column": None if time_choice == "(none)" else time_choice,
+            "time_grain": time_grain,
+            "sentiment_dimensions": list(sentiment_dimensions),
+            "human_label_column": None if label_choice == "(none)" else label_choice,
+            "negative_label": None if negative_label == "(not used)" else negative_label,
+            "positive_label": None if positive_label == "(not used)" else positive_label,
+            "neutral_label": None if neutral_label == "(none)" else neutral_label,
+            "voluntary_reviews": bool(voluntary_reviews),
             "research_question": research_question.strip(),
             "corpus_definition": corpus_definition.strip(),
             "intended_use": intended_use.strip(),
@@ -340,6 +406,8 @@ def render_contract() -> None:
         }
         if group and focal == reference:
             st.error("Choose two different language-comparison groups.")
+        elif sentiment_enabled and label_choice != "(none)" and negative_label == positive_label:
+            st.error("Choose different human labels for negative and positive sentiment.")
         else:
             st.session_state["contract"] = contract
             reset_results()
@@ -429,8 +497,93 @@ def render_lexical() -> None:
         )
 
 
+def render_sentiment() -> None:
+    st.title("4 · Sentiment tracking", anchor=False)
+    required = require_contract()
+    if required is None:
+        return
+    frame, contract = required
+    if not contract.get("sentiment_enabled"):
+        st.info("Enable sentiment tracking in the text contract to use this optional workflow.")
+        return
+    st.warning(
+        "A lexicon score is a measurement proposal, not observed sentiment. Use it substantively only when the fixed "
+        "rule reproduces independent human labels well enough for this corpus and use."
+    )
+    if st.button("Run sentiment tracking", type="primary", key="run_sentiment"):
+        try:
+            config = SentimentConfig(
+                text_column=str(contract["text_column"]),
+                time_column=contract.get("time_column") or None,
+                time_grain=str(contract.get("time_grain", "month")),
+                dimensions=tuple(contract.get("sentiment_dimensions", [])),
+                human_label_column=contract.get("human_label_column") or None,
+                positive_label=contract.get("positive_label") or None,
+                negative_label=contract.get("negative_label") or None,
+                neutral_label=contract.get("neutral_label") or None,
+                voluntary_reviews=bool(contract.get("voluntary_reviews", False)),
+            )
+            st.session_state["sentiment"] = analyze_sentiment(frame, config)
+            st.success("Sentiment scoring complete. Read validation before reading trends.")
+        except Exception as exc:
+            show_error(exc)
+    sentiment = st.session_state.get("sentiment")
+    if sentiment is None:
+        return
+    validation = sentiment.validation_summary
+    metrics = st.columns(4)
+    metrics[0].metric("Validation status", str(validation["status"]))
+    metrics[1].metric("Human-coded texts", f"{int(validation['labeled_documents']):,}")
+    balanced = validation.get("balanced_accuracy")
+    macro_f1 = validation.get("macro_f1")
+    metrics[2].metric("Balanced accuracy", f"{float(balanced):.2f}" if pd.notna(balanced) else "not available")
+    metrics[3].metric("Macro F1", f"{float(macro_f1):.2f}" if pd.notna(macro_f1) else "not available")
+    st.caption(str(validation["meaning"]))
+    for warning in sentiment.warnings:
+        st.warning(warning)
+    st.markdown("### Overall lexicon signal")
+    full_width(st.dataframe, sentiment.overall.round(4), hide_index=True)
+    if not sentiment.validation_by_class.empty:
+        v1, v2 = st.columns(2)
+        with v1:
+            st.markdown("#### Human-label performance")
+            full_width(st.dataframe, sentiment.validation_by_class.round(3), hide_index=True)
+        with v2:
+            st.markdown("#### Confusion table")
+            matrix = sentiment.confusion.pivot(index="human_label", columns="predicted_label", values="documents").fillna(0)
+            full_width(st.dataframe, matrix.astype(int))
+    if not sentiment.time_summary.empty:
+        st.markdown("### Time trend")
+        trend = sentiment.time_summary.copy()
+        chart = go.Figure()
+        chart.add_trace(
+            go.Scatter(
+                x=trend["period"], y=trend["mean_compound"], mode="lines+markers", name="Mean VADER compound",
+                line={"color": COLORS["coral"], "width": 3},
+                error_y={
+                    "type": "data", "symmetric": False,
+                    "array": trend["ci_high"] - trend["mean_compound"],
+                    "arrayminus": trend["mean_compound"] - trend["ci_low"],
+                },
+            )
+        )
+        chart.add_hline(y=0, line_color=COLORS["muted"], line_dash="dot")
+        chart.update_layout(
+            height=430, xaxis_title="Declared time period", yaxis_title="Mean lexicon compound (−1 to 1)",
+            margin={"l": 10, "r": 10, "t": 20, "b": 20}, paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
+        full_width(st.plotly_chart, chart, config={"displayModeBar": False})
+        full_width(st.dataframe, trend.round(4), hide_index=True)
+        st.caption("Intervals reflect document dispersion only; they do not repair review selection, dependence, or source drift.")
+    if not sentiment.dimension_summary.empty:
+        st.markdown("### Declared source, platform, brand, and other comparisons")
+        full_width(st.dataframe, sentiment.dimension_summary.round(4), hide_index=True)
+        st.caption("These are separate descriptive summaries, not adjusted causal comparisons or population estimates.")
+
+
 def render_topics() -> None:
-    st.title("4 · Topics & context", anchor=False)
+    st.title("5 · Topics & context", anchor=False)
     result = require_analysis()
     if result is None:
         return
@@ -483,7 +636,7 @@ def render_topics() -> None:
 
 
 def render_decision() -> None:
-    st.title("5 · Decision & export", anchor=False)
+    st.title("6 · Decision & export", anchor=False)
     result = require_analysis()
     audit = st.session_state.get("audit")
     contract = st.session_state.get("contract")
@@ -523,7 +676,8 @@ def render_decision() -> None:
     export_contract = dict(contract)
     export_contract["interpretation_register"] = register
     pack = build_evidence_pack(
-        source=st.session_state.get("source", {}), contract=export_contract, audit=audit, analysis=result, decision=decision
+        source=st.session_state.get("source", {}), contract=export_contract, audit=audit, analysis=result,
+        decision=decision, sentiment=st.session_state.get("sentiment")
     )
     st.markdown("### Privacy-minimized evidence pack")
     st.write(
@@ -607,7 +761,7 @@ def sidebar() -> str:
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
         st.divider()
-        page = st.radio("Workflow", PAGES, key="page")
+        page = st.radio("Navigate", PAGES, key="page", label_visibility="collapsed")
         if "data" in st.session_state:
             source = st.session_state.get("source", {})
             st.caption(f"{source.get('source_filename', 'Local data')} · {len(st.session_state['data']):,} rows")
@@ -622,8 +776,9 @@ renderers = {
     "1 · Text contract": render_contract,
     "2 · Corpus audit": render_audit,
     "3 · Lexical contrast": render_lexical,
-    "4 · Topics & context": render_topics,
-    "5 · Decision & export": render_decision,
+    "4 · Sentiment tracking": render_sentiment,
+    "5 · Topics & context": render_topics,
+    "6 · Decision & export": render_decision,
     "Methods & limits": render_methods,
 }
 renderers[page]()

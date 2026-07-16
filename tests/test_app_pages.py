@@ -21,8 +21,9 @@ def test_every_page_renders_with_fictional_demo() -> None:
         "1 · Text contract",
         "2 · Corpus audit",
         "3 · Lexical contrast",
-        "4 · Topics & context",
-        "5 · Decision & export",
+        "4 · Sentiment tracking",
+        "5 · Topics & context",
+        "6 · Decision & export",
         "Methods & limits",
     ]:
         at.radio(key="page").set_value(page).run()
@@ -36,11 +37,11 @@ def test_demo_analysis_flow_produces_codebook_test_status() -> None:
     at.button(key="run_analysis").click().run(timeout=60)
     assert "analysis" in at.session_state
 
-    at.radio(key="page").set_value("4 · Topics & context").run()
+    at.radio(key="page").set_value("5 · Topics & context").run()
     assert not at.exception
     assert len(at.dataframe) >= 3
 
-    at.radio(key="page").set_value("5 · Decision & export").run()
+    at.radio(key="page").set_value("6 · Decision & export").run()
     assert not at.exception
     assert at.session_state["decision"]["status"] == "READY FOR CODEBOOK TEST"
     assert len(at.download_button) >= 3

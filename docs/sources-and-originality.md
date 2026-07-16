@@ -12,6 +12,7 @@ this project.
 - principles and limits of automated content analysis: Grimmer and Stewart (2013);
 - topic-number and perturbation stability: Greene, O’Callaghan, and Cunningham (2014), and Belford, Mac Namee, and Greene (2018);
 - marketing text-analysis framing: Berger et al. (2020).
+- rule-based sentiment signal: Hutto and Gilbert (2014), implemented through the public `vaderSentiment` package.
 
 Full citations and DOI links are in the README. Mathematical ideas and bibliographic facts are used with attribution;
 published prose, figures, examples, and tables are not reproduced.
@@ -21,7 +22,7 @@ published prose, figures, examples, and tables are not reproduced.
 TextSignal is independently designed and written from the published text-analysis literature above. No lecture
 wording, narrative, slide design, diagram, screenshot, case, dataset, exercise, assessment material, solution, or
 institution branding appears in TextSignal. General topics encountered in education—content analysis, topic
-modeling, lexical comparison—only define the problem domain. The fictional decision-interface corpus is generated
+modeling, lexical comparison, sentiment validation—only define the problem domain. The fictional decision-interface corpus is generated
 from original sentence components.
 
 The software intentionally differs from a course summary: it is a standalone, auditable workflow with explicit refusal

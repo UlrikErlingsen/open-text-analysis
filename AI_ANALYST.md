@@ -17,7 +17,7 @@
 
 Everything below is addressed to you, the AI. Reproduce this protocol with real computation whenever you can run Python
 (numpy, pandas, scikit-learn, scipy); if you cannot, say plainly that your numbers are approximate. Never invent missing
-text, infer respondent identity, assign sentiment, or present an unsupervised component as a validated theme.
+text, infer respondent identity, present automated sentiment as truth, or present an unsupervised component as a validated theme.
 
 ### 1. Freeze the contract
 
@@ -92,7 +92,13 @@ where y_wg is term w's count in group g and n_g the group's total count. Drop te
 minimum document frequency and rank by |z| (the app shows the top 80). The z scores are descriptive rankings only — do
 not infer cause, intent, importance, or population difference without a justified design.
 
-### 8. Classify the evidence profile
+### 8. Sentiment tracking and validation (optional)
+
+Only run when the user explicitly enables it and a fixed, versioned sentiment rule is available. The app uses English VADER. Record optional time, source, platform, brand, and human-label columns. Report aggregate compound-score means/intervals and positive/neutral/negative shares by declared time grain and by each dimension separately; do not export row-level scores or text.
+
+Without human labels, status is **UNVALIDATED LEXICON SIGNAL**. With mapped negative/positive and optional neutral labels, report the confusion matrix, class precision/recall/F1, balanced accuracy, and macro F1. Fewer than 100 labels is **VALIDATION LIMITED**. With at least 100 labels, require balanced accuracy and macro F1 both at least 0.70 for **LOCALLY SUPPORTED**; otherwise use **MODEL DOES NOT TRANSFER**. Human labels are a local reference, not infallible truth. Always warn when the corpus contains voluntary reviews or exact normalized duplicates, and state that time/platform/brand differences are descriptive and selection-sensitive.
+
+### 9. Classify the evidence profile
 
 Assign exactly one status, checked in this order:
 
@@ -104,7 +110,7 @@ Assign exactly one status, checked in this order:
 5. **READY FOR CODEBOOK TEST** — all checks above pass. This authorizes a pre-specified human coding pilot, not
    deployment, dashboards, or automatic classification.
 
-### 9. Preserve evidence safely
+### 10. Preserve evidence safely
 
 Record the source fingerprint, full contract, configuration, aggregate diagnostics and tables (including the α₀ = 1000
 prior mass and NMF convergence), warnings, interpretation notes, and the decision. Exclude source text, snippets,
@@ -127,6 +133,7 @@ tables with both raw counts and z scores. Quote source text only in masked, shor
 - Log-odds z scores are descriptive association, not causal tests; they ignore sample design and confounding.
 - Prevalence figures are corpus shares, not population estimates, unless the sampling design justifies more.
 - Masking is not de-identification; treat the data as if it still contains personal information.
+- Dictionary sentiment can fail on domain language, sarcasm, target, negation, and platform conventions; never call it measured emotion or population opinion.
 
 ### Sources
 
@@ -144,3 +151,5 @@ tables with both raw counts and z scores. Quote source text only in masked, shor
   *Expert Systems with Applications, 91*, 159–169. https://doi.org/10.1016/j.eswa.2017.08.047
 - Berger, J., Humphreys, A., Ludwig, S., Moe, W. W., Netzer, O., & Schweidel, D. A. (2020). Uniting the tribes:
   Using text for marketing insight. *Journal of Marketing, 84*(1), 1–25. https://doi.org/10.1177/0022242919873106
+- Hutto, C. J., & Gilbert, E. (2014). VADER: A parsimonious rule-based model for sentiment analysis of social media text.
+  *Proceedings of the International AAAI Conference on Web and Social Media, 8*(1), 216–225. https://doi.org/10.1609/icwsm.v8i1.14550

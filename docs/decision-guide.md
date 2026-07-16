@@ -2,6 +2,8 @@
 
 TextSignal classifies the next responsible action. It never certifies themes or replaces a research judgment.
 
+Sentiment has a separate evidence status. `UNVALIDATED LEXICON SIGNAL` and `VALIDATION LIMITED` must not be presented as measured customer feeling. `LOCALLY SUPPORTED` means only that the automated labels showed adequate agreement with the supplied human-labelled sample under the declared rules. `MODEL DOES NOT TRANSFER` means the automated signal should not be used for substantive comparison in that corpus.
+
 ## DATA CHECK REQUIRED
 
 Repeated declared document IDs make the analysis unit uncertain. Resolve duplicate ingestion, repeated measures, or unit

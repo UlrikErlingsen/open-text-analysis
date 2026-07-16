@@ -5,7 +5,7 @@ type: software
 authors:
   - family-names: "Erlingsen"
     given-names: "Ulrik"
-version: 1.0.0
+version: 1.1.0
 date-released: 2026-07-16
 license: AGPL-3.0-or-later
 repository-code: "https://github.com/UlrikErlingsen/open-text-analysis"

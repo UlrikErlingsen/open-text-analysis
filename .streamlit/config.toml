@@ -1,10 +1,15 @@
 [theme]
+base = "light"
 primaryColor = "#D95B40"
 backgroundColor = "#F8F5ED"
 secondaryBackgroundColor = "#EEF2EB"
 textColor = "#17322E"
 font = "sans serif"
 
+[server]
+headless = true
+maxUploadSize = 50
+fileWatcherType = "none"
+
 [browser]
 gatherUsageStats = false
-
