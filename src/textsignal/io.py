@@ -141,6 +141,8 @@ def build_evidence_pack(
         "topic_terms": analysis.topics,
         "topic_prevalence": analysis.topic_prevalence,
         "group_lexical_contrast": analysis.group_contrast,
+        "variant_lexical_contrast": analysis.variant_contrast,
+        "variant_topic_prevalence": analysis.variant_topic_prevalence,
     }
     sentiment_record = None
     if sentiment is not None:

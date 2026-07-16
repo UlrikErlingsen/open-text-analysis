@@ -27,6 +27,8 @@ def main() -> None:
     assert demo["response_id"].is_unique
     assert not demo["open_response"].duplicated().any()
     assert demo["user_stage"].nunique() == 2
+    assert demo["message_variant"].nunique() == 3
+    assert int(demo["message_variant"].value_counts().min()) >= 20
 
 
 if __name__ == "__main__":

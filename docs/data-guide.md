@@ -13,8 +13,10 @@ longitudinal collections require a design that respects dependence.
 - JSON: an array of row objects, or an object with a `data` array.
 - TXT: one non-empty line per document; local sequential IDs are created.
 
-Declare one text column and, when available, a unique document ID. A group column is optional. The lexical contrast uses
-exactly two chosen group values and withholds results when either has fewer than 20 non-blank documents.
+Declare one text column and, when available, a unique document ID. A comparison column is optional and may have two to
+six levels: two levels give the symmetric contrast, three to six levels give a one-vs-rest contrast per variant. Results
+are withheld when any compared level has fewer than 20 non-blank documents, and columns with more than six levels are
+refused — consolidate related levels first.
 
 For sentiment tracking, optionally provide a date/time column plus source, platform, brand, or other comparison fields. A human-label column may contain `negative`, `neutral`, and `positive` labels for local validation. Label a documented sample without seeing the automated result; include difficult, ironic, mixed, domain-specific, and platform-specific examples. Keep source inclusion and review-collection rules stable across periods before reading a trend.
 

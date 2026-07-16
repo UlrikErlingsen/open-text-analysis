@@ -238,7 +238,8 @@ def render_welcome() -> None:
     st.markdown("### A deliberately bounded release")
     st.write(
         "TextSignal 1.1 analyzes English or deliberately preprocessed open-ended responses with TF–IDF, transparent "
-        "non-negative matrix factorization, perturbation stability, optional two-group lexical contrast, and optional "
+        "non-negative matrix factorization, perturbation stability, optional lexical contrast across two to six declared "
+        "variants (symmetric for two, one-vs-rest for three to six), and optional "
         "sentiment tracking with local human-label validation. It does not treat lexicon sentiment as truth and does not perform language detection, embeddings, generative summarization, supervised "
         "classification, causal inference, or qualitative interpretation on the researcher's behalf."
     )
@@ -287,18 +288,32 @@ def render_contract() -> None:
     group_values: list[str] = []
     if group:
         group_values = sorted(frame[group].dropna().astype(str).str.strip().loc[lambda x: x.ne("")].unique().tolist())
-    gc1, gc2 = st.columns(2)
-    with gc1:
-        focal = st.selectbox(
-            "Focal language group", group_values or ["(not used)"],
-            index=index_of(group_values or ["(not used)"], current.get("focal_group")), key="focal_group"
+    too_many_variants = group is not None and len(group_values) > 6
+    multi_variant = group is not None and 3 <= len(group_values) <= 6
+    focal = reference = "(not used)"
+    if too_many_variants:
+        st.error(
+            f"‘{group}’ has {len(group_values)} levels; TextSignal compares at most six. Consolidate related levels "
+            "into up to six variants (for example, merge rare levels into an ‘Other’ category) and reload the data."
         )
-    with gc2:
-        reference_options = [value for value in group_values if value != focal] or ["(not used)"]
-        reference = st.selectbox(
-            "Reference language group", reference_options,
-            index=index_of(reference_options, current.get("reference_group")), key="reference_group"
+    elif multi_variant:
+        st.caption(
+            f"‘{group}’ has {len(group_values)} variants. Each variant will be contrasted one-vs-rest against all "
+            "other variants pooled, with the same smoothed log-odds rule; every variant needs at least 20 non-blank documents."
         )
+    else:
+        gc1, gc2 = st.columns(2)
+        with gc1:
+            focal = st.selectbox(
+                "Focal language group", group_values or ["(not used)"],
+                index=index_of(group_values or ["(not used)"], current.get("focal_group")), key="focal_group"
+            )
+        with gc2:
+            reference_options = [value for value in group_values if value != focal] or ["(not used)"]
+            reference = st.selectbox(
+                "Reference language group", reference_options,
+                index=index_of(reference_options, current.get("reference_group")), key="reference_group"
+            )
 
     with st.expander("Sentiment tracking and declared comparisons · optional", expanded=bool(current.get("sentiment_enabled", False))):
         sentiment_enabled = st.checkbox(
@@ -404,7 +419,9 @@ def render_contract() -> None:
             "language_policy": language_policy.strip(),
             "human_validation_plan": human_validation_plan.strip(),
         }
-        if group and focal == reference:
+        if too_many_variants:
+            st.error("The comparison column has more than six levels; consolidate related levels before saving.")
+        elif group and not multi_variant and focal == reference:
             st.error("Choose two different language-comparison groups.")
         elif sentiment_enabled and label_choice != "(none)" and negative_label == positive_label:
             st.error("Choose different human labels for negative and positive sentiment.")
@@ -479,9 +496,33 @@ def render_lexical() -> None:
     with st.expander("Vocabulary table"):
         full_width(st.dataframe, result.vocabulary, hide_index=True)
 
+    if not result.variant_contrast.empty:
+        st.markdown("### Variant lexical contrast · one-vs-rest")
+        st.caption(
+            "Each variant is compared against all other variants pooled, with the same informative-Dirichlet "
+            "smoothed log odds (α₀ = 1000). Positive z scores mark terms the variant overuses relative to the rest; "
+            "this is descriptive association, not an explanation of variant difference."
+        )
+        variant_names = list(dict.fromkeys(result.variant_contrast["variant"]))
+        for tab, variant_name in zip(st.tabs(variant_names), variant_names):
+            with tab:
+                variant_table = result.variant_contrast.loc[result.variant_contrast["variant"] == variant_name]
+                top_variant = variant_table.head(15).sort_values("z_score")
+                chart = go.Figure(go.Bar(x=top_variant["z_score"], y=top_variant["term"], orientation="h",
+                                         marker_color=COLORS["coral"]))
+                chart.update_layout(height=460, margin=dict(l=10, r=10, t=20, b=10),
+                                    xaxis_title=f"Smoothed log-odds z score · {variant_name} vs rest",
+                                    yaxis_title=None, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+                full_width(st.plotly_chart, chart, config={"displayModeBar": False})
+                full_width(st.dataframe, variant_table, hide_index=True)
+        return
+
     st.markdown("### Two-group lexical contrast")
     if result.group_contrast.empty:
-        st.info("Declare two supported groups in the text contract to estimate smoothed lexical contrast.")
+        st.info(
+            "Declare a comparison column with two to six supported variants in the text contract to estimate "
+            "smoothed lexical contrast: two levels give a symmetric contrast, three to six give one-vs-rest results."
+        )
     else:
         contrast = result.group_contrast.head(30).sort_values("z_score")
         colors = [COLORS["coral"] if value >= 0 else COLORS["teal"] for value in contrast["z_score"]]
@@ -605,6 +646,13 @@ def render_topics() -> None:
 
     st.markdown("### Planned topic solution")
     full_width(st.dataframe, result.topic_prevalence, hide_index=True)
+    if not result.variant_topic_prevalence.empty:
+        st.markdown("#### Variant × topic prevalence")
+        full_width(st.dataframe, result.variant_topic_prevalence.round(3), hide_index=True)
+        st.caption(
+            "Descriptive mean normalized NMF shares per declared variant. Variant composition and self-selection "
+            "confound any difference; no statistical test is performed."
+        )
     selected_topic = st.selectbox("Inspect one lexical topic", result.topic_prevalence["topic"].tolist(), key="topic_inspector")
     term_table = result.topics.loc[result.topics["topic"] == selected_topic].copy()
     c1, c2 = st.columns([0.85, 1.4])

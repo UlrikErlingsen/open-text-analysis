@@ -78,9 +78,9 @@ across documents, not a population estimate. Inspect each component's highest-sh
 masked form; record a provisional label, supporting evidence, rival readings, and terms that may echo the collection
 prompt rather than substantive content.
 
-### 7. Two-group lexical contrast (optional)
+### 7. Lexical contrast: two groups or one-vs-rest variants (optional)
 
-Run only when two declared groups each have at least 20 non-blank documents. Count raw term occurrences over the same
+Run only when every compared group has at least 20 non-blank documents. Count raw term occurrences over the same
 TF–IDF vocabulary and tokenization, then compare groups with informative-Dirichlet smoothed log odds (Monroe, Colaresi &
 Quinn 2008). Distribute a total prior mass α₀ = 1000 in proportion to pooled frequency over the V vocabulary terms:
 
@@ -91,6 +91,14 @@ Quinn 2008). Distribute a total prior mass α₀ = 1000 in proportion to pooled 
 where y_wg is term w's count in group g and n_g the group's total count. Drop terms whose pooled count falls below the
 minimum document frequency and rank by |z| (the app shows the top 80). The z scores are descriptive rankings only — do
 not infer cause, intent, importance, or population difference without a justified design.
+
+**Multi-variant rule.** When the declared comparison column has three to six levels, run the identical statistic once
+per variant, one-vs-rest: group 1 is the variant, group 2 is all other variants pooled, with the same α₀ = 1000 prior
+and frequency filter. Report each variant's top distinctive terms with raw counts and z scores labeled "variant vs
+rest" (positive z = overused by the variant). Require at least 20 non-blank documents per variant; refuse columns with
+more than six levels and ask the user to consolidate related levels. With exactly two levels, keep the symmetric
+contrast above unchanged. Also report a variant × topic table of mean normalized NMF shares per variant, captioned as
+descriptive — variant composition and self-selection confound differences, and no statistical test is performed.
 
 ### 8. Sentiment tracking and validation (optional)
 

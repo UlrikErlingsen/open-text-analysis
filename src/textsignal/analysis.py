@@ -21,6 +21,9 @@ from .errors import DataProblem
 TOKEN_PATTERN = r"(?u)\b[^\W\d_][\w'-]{1,}\b"
 NMF_MAX_ITER = 800
 CONTRAST_PRIOR_MASS = 1000.0
+MAX_VARIANT_LEVELS = 6
+MIN_VARIANT_DOCUMENTS = 20
+VARIANT_TOP_TERMS = 30
 
 
 @dataclass(frozen=True)
@@ -51,6 +54,8 @@ class TextResult:
     topics: pd.DataFrame
     topic_prevalence: pd.DataFrame
     group_contrast: pd.DataFrame
+    variant_contrast: pd.DataFrame
+    variant_topic_prevalence: pd.DataFrame
     document_topics: pd.DataFrame
     representatives: pd.DataFrame
     diagnostics: dict[str, object]
@@ -182,7 +187,7 @@ def _retention_table(matrix, config: TextConfig) -> tuple[pd.DataFrame, dict[int
     return pd.DataFrame(rows), per_topic, capped_fits
 
 
-def _term_tables(texts: list[str], tfidf, vectorizer: TfidfVectorizer, config: TextConfig) -> pd.DataFrame:
+def _count_matrix(texts: list[str], vectorizer: TfidfVectorizer, config: TextConfig):
     counter = CountVectorizer(
         lowercase=True,
         strip_accents="unicode",
@@ -191,7 +196,11 @@ def _term_tables(texts: list[str], tfidf, vectorizer: TfidfVectorizer, config: T
         ngram_range=(1, config.ngram_max),
         vocabulary=vectorizer.vocabulary_,
     )
-    counts = counter.transform(texts)
+    return counter.transform(texts)
+
+
+def _term_tables(texts: list[str], tfidf, vectorizer: TfidfVectorizer, config: TextConfig) -> pd.DataFrame:
+    counts = _count_matrix(texts, vectorizer, config)
     features = vectorizer.get_feature_names_out()
     return pd.DataFrame(
         {
@@ -204,34 +213,8 @@ def _term_tables(texts: list[str], tfidf, vectorizer: TfidfVectorizer, config: T
     ).sort_values(["mean_tfidf", "term_count"], ascending=False, ignore_index=True)
 
 
-def _group_contrast(
-    frame: pd.DataFrame,
-    nonblank_index: pd.Index,
-    texts: list[str],
-    vectorizer: TfidfVectorizer,
-    config: TextConfig,
-) -> pd.DataFrame:
-    columns = ["term", "focal_count", "reference_count", "log_odds", "z_score", "direction"]
-    if not config.group or config.focal_group is None or config.reference_group is None:
-        return pd.DataFrame(columns=columns)
-    if config.group not in frame.columns:
-        raise DataProblem(f"The comparison-group column ‘{config.group}’ is not in the data.")
-    labels = frame.loc[nonblank_index, config.group].astype("string").fillna("").str.strip().to_numpy()
-    focal_mask = labels == str(config.focal_group)
-    reference_mask = labels == str(config.reference_group)
-    if int(focal_mask.sum()) < 20 or int(reference_mask.sum()) < 20:
-        raise DataProblem("Each selected language-comparison group needs at least 20 non-blank documents.")
-    counter = CountVectorizer(
-        lowercase=True,
-        strip_accents="unicode",
-        token_pattern=TOKEN_PATTERN,
-        stop_words=_stopwords(config) or None,
-        ngram_range=(1, config.ngram_max),
-        vocabulary=vectorizer.vocabulary_,
-    )
-    counts = counter.transform(texts)
-    focal = np.asarray(counts[focal_mask].sum(axis=0)).ravel().astype(float)
-    reference = np.asarray(counts[reference_mask].sum(axis=0)).ravel().astype(float)
+def _informative_log_odds(focal: np.ndarray, reference: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Monroe, Colaresi & Quinn (2008) smoothed log odds with an informative corpus prior."""
     background = focal + reference
     alpha = CONTRAST_PRIOR_MASS * (background + 1.0) / float(background.sum() + len(background))
     alpha_0 = float(alpha.sum())
@@ -241,7 +224,38 @@ def _group_contrast(
     reference_odds = np.log((reference + alpha) / (reference_total + alpha_0 - reference - alpha))
     delta = focal_odds - reference_odds
     variance = 1.0 / (focal + alpha) + 1.0 / (reference + alpha)
-    z_score = delta / np.sqrt(variance)
+    return delta, delta / np.sqrt(variance)
+
+
+def _comparison_labels(frame: pd.DataFrame, nonblank_index: pd.Index, config: TextConfig) -> tuple[np.ndarray, list[str]]:
+    """Return trimmed comparison labels per non-blank document and the sorted non-missing levels."""
+    if config.group not in frame.columns:
+        raise DataProblem(f"The comparison-group column ‘{config.group}’ is not in the data.")
+    labels = frame.loc[nonblank_index, config.group].astype("string").fillna("").str.strip().to_numpy()
+    levels = sorted({str(label) for label in labels if label})
+    if len(levels) > MAX_VARIANT_LEVELS:
+        raise DataProblem(
+            f"The comparison column ‘{config.group}’ has {len(levels)} levels; TextSignal compares at most "
+            f"{MAX_VARIANT_LEVELS}. Consolidate related levels into up to {MAX_VARIANT_LEVELS} variants and rerun."
+        )
+    return labels, levels
+
+
+def _group_contrast(
+    labels: np.ndarray,
+    texts: list[str],
+    vectorizer: TfidfVectorizer,
+    config: TextConfig,
+) -> pd.DataFrame:
+    focal_mask = labels == str(config.focal_group)
+    reference_mask = labels == str(config.reference_group)
+    if int(focal_mask.sum()) < MIN_VARIANT_DOCUMENTS or int(reference_mask.sum()) < MIN_VARIANT_DOCUMENTS:
+        raise DataProblem("Each selected language-comparison group needs at least 20 non-blank documents.")
+    counts = _count_matrix(texts, vectorizer, config)
+    focal = np.asarray(counts[focal_mask].sum(axis=0)).ravel().astype(float)
+    reference = np.asarray(counts[reference_mask].sum(axis=0)).ravel().astype(float)
+    background = focal + reference
+    delta, z_score = _informative_log_odds(focal, reference)
     table = pd.DataFrame(
         {
             "term": vectorizer.get_feature_names_out(),
@@ -256,6 +270,40 @@ def _group_contrast(
     return table.reindex(table["z_score"].abs().sort_values(ascending=False).index).head(80).reset_index(drop=True)
 
 
+def _variant_contrast(
+    labels: np.ndarray,
+    levels: list[str],
+    texts: list[str],
+    vectorizer: TfidfVectorizer,
+    config: TextConfig,
+) -> pd.DataFrame:
+    """One-vs-rest smoothed log odds per variant, reusing the same informative prior."""
+    counts = _count_matrix(texts, vectorizer, config)
+    total = np.asarray(counts.sum(axis=0)).ravel().astype(float)
+    features = vectorizer.get_feature_names_out()
+    tables: list[pd.DataFrame] = []
+    for level in levels:
+        mask = labels == level
+        variant = np.asarray(counts[mask].sum(axis=0)).ravel().astype(float)
+        rest = total - variant
+        delta, z_score = _informative_log_odds(variant, rest)
+        table = pd.DataFrame(
+            {
+                "variant": level,
+                "term": features,
+                "variant_count": variant.astype(int),
+                "rest_count": rest.astype(int),
+                "log_odds": delta,
+                "z_score": z_score,
+                "comparison": f"{level} vs rest",
+            }
+        )
+        table = table.loc[total >= config.min_df]
+        table = table.sort_values("z_score", ascending=False).head(VARIANT_TOP_TERMS)
+        tables.append(table)
+    return pd.concat(tables, ignore_index=True)
+
+
 def analyze_text(frame: pd.DataFrame, config: TextConfig) -> TextResult:
     """Run TF-IDF, perturbation-checked NMF topics, and optional group keyness."""
     texts_all = prepare_texts(frame, config.text_column)
@@ -266,6 +314,20 @@ def analyze_text(frame: pd.DataFrame, config: TextConfig) -> TextResult:
         raise DataProblem(
             f"Only {len(texts)} non-blank documents remain; this bounded workflow requires at least {minimum_documents}."
         )
+    variant_labels: np.ndarray | None = None
+    variant_levels: list[str] = []
+    symmetric_contrast = config.focal_group is not None and config.reference_group is not None
+    if config.group:
+        variant_labels, variant_levels = _comparison_labels(frame, texts.index, config)
+    one_vs_rest = variant_labels is not None and not symmetric_contrast and len(variant_levels) >= 2
+    if one_vs_rest:
+        for level in variant_levels:
+            level_documents = int((variant_labels == level).sum())
+            if level_documents < MIN_VARIANT_DOCUMENTS:
+                raise DataProblem(
+                    f"Each compared variant needs at least {MIN_VARIANT_DOCUMENTS} non-blank documents; "
+                    f"‘{level}’ has {level_documents}."
+                )
     vectorizer, stopwords = _vectorizers(config)
     try:
         tfidf_all = vectorizer.fit_transform(texts.tolist())
@@ -354,7 +416,29 @@ def analyze_text(frame: pd.DataFrame, config: TextConfig) -> TextResult:
     representatives = pd.DataFrame(representative_rows)
 
     vocabulary = _term_tables(texts.tolist(), tfidf_all, vectorizer, config)
-    contrast = _group_contrast(frame, texts.index, texts.tolist(), vectorizer, config)
+    contrast = pd.DataFrame(columns=["term", "focal_count", "reference_count", "log_odds", "z_score", "direction"])
+    variant_contrast = pd.DataFrame(
+        columns=["variant", "term", "variant_count", "rest_count", "log_odds", "z_score", "comparison"]
+    )
+    if variant_labels is not None and symmetric_contrast:
+        contrast = _group_contrast(variant_labels, texts.tolist(), vectorizer, config)
+    elif one_vs_rest:
+        variant_contrast = _variant_contrast(variant_labels, variant_levels, texts.tolist(), vectorizer, config)
+
+    variant_topic_prevalence = pd.DataFrame(columns=["variant", "documents"])
+    if variant_labels is not None and len(variant_levels) >= 2:
+        usable_labels = variant_labels[usable_positions]
+        variant_rows: list[dict[str, object]] = []
+        for level in variant_levels:
+            level_mask = usable_labels == level
+            if not level_mask.any():
+                continue
+            variant_row: dict[str, object] = {"variant": level, "documents": int(level_mask.sum())}
+            for topic_index in range(config.planned_topics):
+                variant_row[f"Topic {topic_index + 1}"] = float(shares[level_mask, topic_index].mean())
+            variant_rows.append(variant_row)
+        variant_topic_prevalence = pd.DataFrame(variant_rows)
+
     selected = retention.loc[retention["topics"] == config.planned_topics].iloc[0]
     diagnostics = {
         "source_rows": int(len(frame)),
@@ -369,6 +453,12 @@ def analyze_text(frame: pd.DataFrame, config: TextConfig) -> TextResult:
         "nmf_fits_at_iteration_cap": int(capped_fits),
         "nmf_max_iterations": NMF_MAX_ITER,
         "contrast_prior_mass": CONTRAST_PRIOR_MASS,
+        "comparison_variant_levels": variant_levels,
+        "contrast_design": (
+            "two-group symmetric" if symmetric_contrast and variant_labels is not None
+            else "one-vs-rest per variant" if one_vs_rest
+            else "none"
+        ),
         "mean_topic_stability": float(selected["mean_topic_stability"]),
         "minimum_topic_stability": float(selected["minimum_topic_stability"]),
         "top_term_diversity": float(selected["top_term_diversity"]),
@@ -396,6 +486,15 @@ def analyze_text(frame: pd.DataFrame, config: TextConfig) -> TextResult:
         analysis_warnings.append("The built-in stopword list is English; multilingual or domain-specific corpora need a declared custom policy.")
     if not contrast.empty:
         analysis_warnings.append("Group keyness is descriptive association; it does not establish why groups use different language.")
+    if not variant_contrast.empty:
+        analysis_warnings.append(
+            "One-vs-rest variant keyness is descriptive association; it does not establish why variants read differently."
+        )
+    if not variant_topic_prevalence.empty:
+        analysis_warnings.append(
+            "The variant × topic prevalence table is descriptive; variant composition and self-selection confound "
+            "differences, and no statistical test is performed."
+        )
 
     return TextResult(
         config=config,
@@ -404,6 +503,8 @@ def analyze_text(frame: pd.DataFrame, config: TextConfig) -> TextResult:
         topics=topics_table,
         topic_prevalence=prevalence,
         group_contrast=contrast,
+        variant_contrast=variant_contrast,
+        variant_topic_prevalence=variant_topic_prevalence,
         document_topics=document_topics,
         representatives=representatives,
         diagnostics=diagnostics,

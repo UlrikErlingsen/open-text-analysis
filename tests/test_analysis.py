@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -77,3 +78,60 @@ def test_group_contrast_requires_supported_groups() -> None:
     frame.loc[19:, "user_stage"] = "Routine use"
     with pytest.raises(DataProblem, match="at least 20"):
         analyze_text(frame, demo_config(stability_iterations=3))
+
+
+@lru_cache(maxsize=1)
+def variant_result():
+    return analyze_text(
+        demo_dataframe(),
+        demo_config(group="message_variant", focal_group=None, reference_group=None),
+    )
+
+
+def test_variant_contrast_surfaces_planted_terms_one_vs_rest() -> None:
+    result = variant_result()
+    contrast = result.variant_contrast
+    assert set(contrast["variant"]) == {"Checklist intro", "Vignette intro", "Glossary intro"}
+    for variant, planted in [
+        ("Checklist intro", "checklist"),
+        ("Vignette intro", "vignette"),
+        ("Glossary intro", "glossary"),
+    ]:
+        rows = contrast.loc[(contrast["variant"] == variant) & (contrast["term"] == planted)]
+        assert len(rows) == 1, planted
+        assert float(rows["z_score"].iloc[0]) > 0
+        assert int(rows["variant_count"].iloc[0]) >= 20
+        assert (contrast.loc[contrast["variant"] == variant, "comparison"] == f"{variant} vs rest").all()
+    assert result.group_contrast.empty
+    assert result.diagnostics["contrast_design"] == "one-vs-rest per variant"
+    prevalence = result.variant_topic_prevalence
+    assert len(prevalence) == 3
+    topic_columns = [column for column in prevalence.columns if column.startswith("Topic ")]
+    assert len(topic_columns) == 3
+    assert np.allclose(prevalence[topic_columns].to_numpy().sum(axis=1), 1.0, atol=1e-6)
+
+
+def test_two_group_contrast_regression_is_unchanged() -> None:
+    result = demo_result()
+    assert result.variant_contrast.empty
+    assert not result.group_contrast.empty
+    assert list(result.group_contrast.columns) == [
+        "term", "focal_count", "reference_count", "log_odds", "z_score", "direction",
+    ]
+    assert result.diagnostics["contrast_design"] == "two-group symmetric"
+    assert set(result.variant_topic_prevalence["variant"]) == {"New setup", "Routine use"}
+
+
+def test_more_than_six_variant_levels_are_refused() -> None:
+    frame = demo_dataframe()
+    frame["seven_levels"] = [f"V{index % 7}" for index in range(len(frame))]
+    with pytest.raises(DataProblem, match="Consolidate related levels"):
+        analyze_text(frame, demo_config(group="seven_levels", focal_group=None, reference_group=None))
+
+
+def test_variant_minimum_documents_are_enforced() -> None:
+    frame = demo_dataframe()
+    starved = frame.index[frame["message_variant"] == "Vignette intro"][10:]
+    frame.loc[starved, "message_variant"] = "Checklist intro"
+    with pytest.raises(DataProblem, match="at least 20 non-blank documents"):
+        analyze_text(frame, demo_config(group="message_variant", focal_group=None, reference_group=None))

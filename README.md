@@ -12,7 +12,8 @@
 <p align="center"><strong>Open-text evidence — define the corpus, stress the patterns, hand interpretation back to people.</strong></p>
 
 TextSignal is a local-first Streamlit workbench for exploratory analysis of open-ended responses. It combines a written
-corpus contract, depth and duplication audits, transparent TF–IDF vocabulary, optional two-group lexical contrast,
+corpus contract, depth and duplication audits, transparent TF–IDF vocabulary, optional lexical contrast across two to
+six declared variants (symmetric for two, one-vs-rest for three to six),
 non-negative matrix factorization (NMF), repeated 80% corpus perturbations, masked context inspection, a human
 interpretation register, and privacy-minimized evidence exports.
 
@@ -41,13 +42,15 @@ friction improves evidence:
 ## Supported scope
 
 - CSV, XLSX, JSON, and one-document-per-line TXT import;
-- one open-text column, optional document ID, and optional two-group contrast;
+- one open-text column, optional document ID, and an optional comparison column with 2–6 levels;
 - Unicode NFKC normalization, English/custom stopwords, unigrams or bigrams;
 - sublinear TF–IDF with declared minimum and maximum document frequency;
 - NMF solutions for 2–8 topics using NNDSVDa initialization and Frobenius loss;
 - topic-count comparison using relative reconstruction error, top-term diversity, and perturbation stability;
 - 80% document subsampling, cosine similarity, and Hungarian alignment to the full-corpus topics;
-- informative-Dirichlet smoothed log-odds group contrast;
+- informative-Dirichlet smoothed log-odds contrast: symmetric for two groups, one-vs-rest per variant for 3–6 levels
+  (each variant needs at least 20 non-blank documents; more than six levels are refused), plus a descriptive
+  variant × topic prevalence table;
 - masked context inspection and a per-topic human interpretation register;
 - optional VADER sentiment signals by time, source, platform, brand, or another declared dimension;
 - local validation against human sentiment labels with confusion, class precision/recall/F1, balanced accuracy, and macro F1;

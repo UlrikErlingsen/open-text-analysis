@@ -81,7 +81,7 @@ deliberate emphasis on distinctiveness over volume.
 Topic prevalence is the mean normalized weight share. It is not a population prevalence estimate unless the sampling and
 nonresponse design justify that inference.
 
-## 6. Two-group lexical contrast
+## 6. Lexical contrast: two groups or one-vs-rest variants
 
 For two declared groups, term counts are compared with informative-Dirichlet smoothed log odds following Monroe,
 Colaresi, and Quinn (2008). The prior distributes a total mass of \(\alpha_0 = 1000\) in proportion to pooled corpus
@@ -103,6 +103,21 @@ with approximate variance
 
 The z score ranks descriptive lexical differences. It is not a causal test and does not correct for sample design,
 confounding, document length mechanisms, multiple research choices, or population selection.
+
+### One-vs-rest extension for 3–6 variants
+
+When the declared comparison column has three to six levels (for example message or campaign variants), the identical
+smoothed log-odds statistic is applied once per variant, with group 1 the variant and group 2 all other variants pooled
+("rest"). The same \(\alpha_0 = 1000\) informative prior, vocabulary, and minimum-frequency filter apply; each variant's
+top distinctive terms are reported with raw counts and z scores explicitly labeled "variant vs rest". Guardrails: every
+variant needs at least 20 non-blank documents, and columns with more than six levels are refused with a request to
+consolidate related levels. With exactly two levels the original symmetric contrast is used unchanged. One-vs-rest z
+scores are the same descriptive rankings as above; because the rest pool changes with each variant, scores are not
+comparable across variants as effect sizes.
+
+The topics page additionally reports a variant × topic prevalence table: the mean normalized NMF weight share per
+declared variant. It is descriptive only — variant composition and self-selection confound any difference, and no
+statistical test is performed.
 
 ## 7. Sentiment signals and local validation
 

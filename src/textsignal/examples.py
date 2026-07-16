@@ -7,7 +7,11 @@ import pandas as pd
 
 
 def demo_dataframe(seed: int = 260716) -> pd.DataFrame:
-    """Generate an original three-pattern corpus about a fictional decision interface."""
+    """Generate an original three-pattern corpus about a fictional decision interface.
+
+    Includes a two-level `user_stage` comparison and a three-level `message_variant`
+    onboarding-message column for the one-vs-rest lexical comparison.
+    """
     rng = np.random.default_rng(seed)
     navigation_subjects = ["menu", "layout", "filter panel", "navigation path", "page hierarchy", "control labels"]
     navigation_actions = ["find the right view", "move between sections", "understand where I am", "locate saved work"]
@@ -37,6 +41,18 @@ def demo_dataframe(seed: int = 260716) -> pd.DataFrame:
         (action_subjects, action_actions, action_notes),
     ]
 
+    # Three fictional onboarding-message variants with different sentence-component mixes.
+    # A separate seeded stream keeps the base sentences identical to earlier releases. The glue
+    # words appear in every response, so the declared maximum document share removes them and each
+    # variant contributes only its own small set of distinctive terms.
+    variant_rng = np.random.default_rng(seed + 17)
+    variant_names = ["Checklist intro", "Vignette intro", "Glossary intro"]
+    variant_components = [
+        ["checklist", "numbered checklist", "checklist recap"],
+        ["vignette", "worked vignette", "vignette recap"],
+        ["glossary", "compact glossary", "glossary recap"],
+    ]
+
     rows: list[dict[str, object]] = []
     for index in range(540):
         stage = "New setup" if index < 270 else "Routine use"
@@ -46,15 +62,22 @@ def demo_dataframe(seed: int = 260716) -> pd.DataFrame:
         subject, action, note = topic_parts[primary]
         secondary_subject, secondary_action, _ = topic_parts[secondary]
         selected_note = str(rng.choice(note))
+        variant_index = int(variant_rng.integers(3))
+        variant_clause = (
+            f"The {variant_rng.choice(variant_components[variant_index])} summary in the onboarding "
+            "message stays visible while I work"
+        )
         sentence = (
             f"{rng.choice(contexts).capitalize()}, the {rng.choice(subject)} helps me {rng.choice(action)}, and {selected_note}. "
-            f"{rng.choice(qualifiers)}, I also check the {rng.choice(secondary_subject)} so I can {rng.choice(secondary_action)}."
+            f"{rng.choice(qualifiers)}, I also check the {rng.choice(secondary_subject)} so I can {rng.choice(secondary_action)}. "
+            f"{variant_clause}."
         )
         human_sentiment = "negative" if any(word in selected_note for word in ("crowded", "unclear", "need")) else "positive"
         rows.append(
             {
                 "response_id": f"TX-{index + 1:04d}",
                 "user_stage": stage,
+                "message_variant": variant_names[variant_index],
                 "recorded_at": (pd.Timestamp("2025-01-01") + pd.to_timedelta(int(index), unit="D")).date().isoformat(),
                 "source": "Survey" if index % 3 else "Review",
                 "platform": "Web" if index % 2 else "Mobile",
