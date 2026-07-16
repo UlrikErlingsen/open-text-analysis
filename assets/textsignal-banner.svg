@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">TextSignal</title>
+  <desc id="desc">What are people actually saying, and does the pattern hold?</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1"><stop stop-color="#173C3A"/><stop offset="1" stop-color="#102C2A"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#83D2B4" stop-opacity=".18"/><stop offset="1" stop-color="#83D2B4" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="360" rx="36" fill="url(#bg)"/>
+  <circle cx="1050" cy="180" r="260" fill="url(#glow)"/><circle cx="92" cy="385" r="155" fill="#F2C66D" opacity=".07"/>
+  <g transform="translate(72 70)">
+    <rect width="118" height="118" rx="30" fill="#102C2A" stroke="#83D2B4" stroke-width="3"/>
+    <g fill="none" stroke="#83D2B4" stroke-width="2" opacity=".5">
+      <path d="M33 30c8 16 8 35 0 57M64 30c-8 16-8 35 0 57M91 30c-6 17-6 34 0 57"/>
+    </g>
+    <g fill="#F8F5ED" opacity=".88">
+      <rect x="20" y="25" width="18" height="9" rx="4.5" fill="#83D2B4"/><rect x="43" y="25" width="29" height="9" rx="4.5"/><rect x="77" y="25" width="21" height="9" rx="4.5"/>
+      <rect x="20" y="54" width="27" height="9" rx="4.5"/><rect x="52" y="54" width="17" height="9" rx="4.5" fill="#F2C66D"/><rect x="74" y="54" width="24" height="9" rx="4.5"/>
+      <rect x="20" y="83" width="19" height="9" rx="4.5"/><rect x="44" y="83" width="30" height="9" rx="4.5"/><rect x="79" y="83" width="19" height="9" rx="4.5" fill="#D95B40"/>
+    </g>
+  </g>
+  <text x="222" y="136" fill="#F8F5ED" font-family="Inter,Arial,sans-serif" font-size="68" font-weight="800" letter-spacing="-3">Text<tspan fill="#F2C66D">Signal</tspan></text>
+  <text x="226" y="192" fill="#D7E3DF" font-family="Inter,Arial,sans-serif" font-size="25">What are people actually saying—and does the pattern hold?</text>
+  <g font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700">
+    <rect x="226" y="233" width="174" height="42" rx="21" fill="#fff" opacity=".08"/><text x="252" y="260" fill="#F8F5ED">CORPUS AUDIT</text>
+    <rect x="414" y="233" width="186" height="42" rx="21" fill="#fff" opacity=".08"/><text x="441" y="260" fill="#F8F5ED">STABLE TOPICS</text>
+    <rect x="614" y="233" width="210" height="42" rx="21" fill="#fff" opacity=".08"/><text x="640" y="260" fill="#F8F5ED">HUMAN CODEBOOK</text>
+  </g>
+  <g transform="translate(900 72)">
+    <g stroke="#83D2B4" stroke-width="2" opacity=".35" fill="none">
+      <path d="M22 20c24 42 24 87 0 130M109 20c-24 42-24 87 0 130M198 20c-20 42-20 87 0 130"/>
+    </g>
+    <g fill="#F8F5ED" opacity=".6">
+      <rect x="0" y="13" width="36" height="12" rx="6" fill="#83D2B4"/><rect x="46" y="13" width="73" height="12" rx="6"/><rect x="129" y="13" width="55" height="12" rx="6"/>
+      <rect x="0" y="75" width="64" height="12" rx="6"/><rect x="74" y="75" width="48" height="12" rx="6" fill="#F2C66D"/><rect x="132" y="75" width="68" height="12" rx="6"/>
+      <rect x="0" y="137" width="43" height="12" rx="6"/><rect x="53" y="137" width="84" height="12" rx="6"/><rect x="147" y="137" width="49" height="12" rx="6" fill="#D95B40"/>
+    </g>
+  </g>
+</svg>

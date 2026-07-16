@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title desc">
+  <title id="title">TextSignal mark</title>
+  <desc id="desc">Three lines of text with recurring term blocks connected across the corpus.</desc>
+  <rect width="96" height="96" rx="24" fill="#173C3A"/>
+  <g fill="none" stroke="#83D2B4" stroke-width="2" opacity=".5">
+    <path d="M27 25C34 39 34 53 27 70M52 25c-7 14-7 31 0 45M73 25c-5 15-5 30 0 45"/>
+  </g>
+  <g fill="#F8F5ED" opacity=".88">
+    <rect x="17" y="21" width="14" height="7" rx="3.5"/><rect x="35" y="21" width="23" height="7" rx="3.5"/><rect x="62" y="21" width="17" height="7" rx="3.5"/>
+    <rect x="17" y="44" width="23" height="7" rx="3.5"/><rect x="44" y="44" width="13" height="7" rx="3.5"/><rect x="61" y="44" width="18" height="7" rx="3.5"/>
+    <rect x="17" y="67" width="15" height="7" rx="3.5"/><rect x="36" y="67" width="24" height="7" rx="3.5"/><rect x="64" y="67" width="15" height="7" rx="3.5"/>
+  </g>
+  <rect x="17" y="21" width="14" height="7" rx="3.5" fill="#83D2B4"/>
+  <rect x="44" y="44" width="13" height="7" rx="3.5" fill="#F2C66D"/>
+  <rect x="64" y="67" width="15" height="7" rx="3.5" fill="#D95B40"/>
+</svg>

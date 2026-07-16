@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use TextSignal, please cite this software."
+title: "TextSignal"
+type: software
+authors:
+  - family-names: "Erlingsen"
+    given-names: "Ulrik"
+version: 1.0.0
+date-released: 2026-07-16
+license: AGPL-3.0-or-later
+repository-code: "https://github.com/UlrikErlingsen/open-text-analysis"
+url: "https://github.com/UlrikErlingsen/open-text-analysis"
+abstract: "Local-first exploratory corpus audit, lexical contrast, stable NMF topics, and human-codebook handoff."
