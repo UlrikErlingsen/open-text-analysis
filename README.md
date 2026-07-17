@@ -184,7 +184,10 @@ These apps share a visual language but answer different questions:
 - **[MeasureSignal](https://github.com/UlrikErlingsen/measurement-validation)** asks whether a multi-item score measures what you think it does.
 - **[ExperimentSignal](https://github.com/UlrikErlingsen/experiment-analysis)** asks whether a randomized treatment caused a change worth acting on.
 - **[GateSignal](https://github.com/UlrikErlingsen/launch-decision-gate)** asks whether a concept should receive the next bounded investment.
+- **[TagSignal](https://github.com/UlrikErlingsen/pricing-analysis)** asks what price range is supported and how unit contribution changes, from assigned-price, historical, or willingness-to-pay evidence.
 - **[RecommendSignal](https://github.com/UlrikErlingsen/recommender-evaluation)** compares recommendation policies offline before a finalist is tested live.
+- **[TraceSignal](https://github.com/UlrikErlingsen/journey-path-analysis)** asks how logged customer journeys actually unfold: transitions, path support, drop-off, and Markov removal sensitivity, with no causal channel credit.
+- **[TrackSignal](https://github.com/UlrikErlingsen/brand-tracking)** asks whether brand measures moved across tracking waves by more than a declared practical threshold.
 - **TextSignal** asks what recurring language patterns appear in a declared corpus of open-ended responses.
 
 TextSignal is for open-ended language. It should not be used to turn text into an unvalidated numeric score for the
