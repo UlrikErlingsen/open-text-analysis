@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from streamlit.testing.v1 import AppTest
+from pathlib import Path
 
+from streamlit.testing.v1 import AppTest
+APP = str(Path(__file__).parents[1] / "app.py")
 
 def app() -> AppTest:
-    return AppTest.from_file("app.py", default_timeout=60).run()
+    return AppTest.from_file(APP, default_timeout=60).run()
 
 
 def test_welcome_page_and_bounded_brand_are_rendered() -> None:
