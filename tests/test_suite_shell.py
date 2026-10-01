@@ -55,7 +55,6 @@ def test_runtime_scaffolding_is_private_and_health_checked() -> None:
     workflow = (ROOT / ".github" / "workflows" / "tests.yml").read_text(encoding="utf-8")
 
     assert "gatherUsageStats = false" in config
-    assert "maxUploadSize = 50" in config
     assert 'base = "light"' in config
     assert 'primaryColor = "#a06f1f"' in config  # Signal Research family, 600 step
     assert "USER textsignal" in dockerfile

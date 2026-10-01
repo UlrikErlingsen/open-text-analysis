@@ -98,7 +98,8 @@ def colorway(key: str) -> list[str]:
     """Categorical series: the app's own family first, then the other families, then neutral."""
     own = app(key)["family"]
     order = [own] + [f for f in FAMILIES if f != own]
-    return [FAMILIES[f]["600"] for f in order] + [CORE["muted"]]
+    # Ten distinct hues: the five family 600s, then the five 800s, then neutral (for charts with many series).
+    return [FAMILIES[f]["600"] for f in order] + [FAMILIES[f]["800"] for f in order] + [CORE["muted"]]
 
 
 def sequential(key: str) -> list[str]:
@@ -124,8 +125,8 @@ def plotly_template(key: str):
         font=dict(family="Figtree, system-ui, sans-serif", size=14, color=CORE["text"]),
         title=dict(font=dict(size=18, weight=800), x=0, xanchor="left"),
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        xaxis=dict(gridcolor="rgba(32,30,29,.08)", zerolinecolor=CORE["soft"], linecolor=CORE["line"], ticks=""),
-        yaxis=dict(gridcolor="rgba(32,30,29,.08)", zerolinecolor=CORE["soft"], linecolor=CORE["line"], ticks=""),
+        xaxis=dict(gridcolor="rgba(32,30,29,.08)", zerolinecolor=CORE["soft"], linecolor=CORE["line"], ticks="", automargin=True),
+        yaxis=dict(gridcolor="rgba(32,30,29,.08)", zerolinecolor=CORE["soft"], linecolor=CORE["line"], ticks="", automargin=True),
         legend=dict(orientation="h", y=-0.18, x=0, bgcolor="rgba(0,0,0,0)"),
         geo=dict(bgcolor="rgba(0,0,0,0)", lakecolor=CORE["bg"], landcolor=CORE["paper"]),
         colorscale=dict(sequential=sequential(key), diverging=DIVERGING),
@@ -154,6 +155,19 @@ def chart(app_key: str, fig, **kwargs):
     does not replace Figtree and the palette. Other keyword arguments go to st.plotly_chart (key=, on_select=...);
     its return value (the selection state when on_select is set) is passed back."""
     fig.update_layout(template=template(app_key))
+    # Streamlit's frontend still writes its own font and background into the layout, and values set on the
+    # figure itself win over the template, so copy the template's look onto the figure unless the app set it.
+    lay = fig.layout
+    if lay.font.family is None:
+        fig.update_layout(font_family="Figtree, system-ui, sans-serif")
+    if lay.font.color is None:
+        fig.update_layout(font_color=CORE["text"])
+    if lay.paper_bgcolor is None:
+        fig.update_layout(paper_bgcolor="rgba(0,0,0,0)")
+    if lay.plot_bgcolor is None:
+        fig.update_layout(plot_bgcolor="rgba(0,0,0,0)")
+    if lay.hoverlabel.bgcolor is None:
+        fig.update_layout(hoverlabel=dict(bgcolor=CORE["sidebar"], font=dict(color=CORE["paper"], family="Figtree")))
     kwargs.setdefault("theme", None)
     kwargs.setdefault("width", "stretch")
     return st.plotly_chart(fig, **kwargs)
@@ -207,6 +221,8 @@ a {{ color:var(--sg-a700); }} a:hover {{ color:var(--sg-a800); }}
 [data-testid="stSidebar"] [role="radiogroup"] label {{ border-radius:999px; padding:.3rem .8rem; margin:0; }}
 [data-testid="stSidebar"] [role="radiogroup"] label:hover {{ background:rgba(249,244,237,.08); }}
 [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {{ background:var(--sg-a700); }}
+[data-testid="stSidebar"] [data-testid="stAlert"] {{ background:rgba(249,244,237,.08) !important; }}
+[data-testid="stSidebar"] [data-testid="stAlert"] * {{ color:{c['sidebar_text']} !important; }}
 [data-testid="stSidebar"] [data-testid="stExpander"] {{ background:rgba(249,244,237,.06); border-color:rgba(249,244,237,.18); }}
 [data-testid="stSidebar"] [data-testid="stExpander"] summary, [data-testid="stSidebar"] [data-testid="stExpander"] summary * {{ color:{c['sidebar_text']} !important; }}
 [data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stMarkdownContainer"] * {{ color:{c['sidebar_text']}; }}
@@ -233,7 +249,9 @@ a {{ color:var(--sg-a700); }} a:hover {{ color:var(--sg-a800); }}
 
 /* surfaces */
 [data-testid="stMetric"] {{ background:var(--sg-paper); border-radius:var(--sg-r); padding:1rem 1.2rem; }}
-[data-testid="stMetricValue"] {{ color:var(--sg-text); font-weight:800; letter-spacing:-.02em; }}
+[data-testid="stMetricValue"] {{ color:var(--sg-text); font-weight:800; letter-spacing:-.02em;
+  font-size:clamp(1.25rem,2.1vw,1.8rem); }}
+[data-testid="stMetricValue"] > div {{ white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:anywhere; }}
 [data-testid="stMetricLabel"] p {{ color:var(--sg-muted); }}
 [data-testid="stExpander"] {{ border-radius:var(--sg-r); border:1px solid var(--sg-line); background:var(--sg-paper); }}
 [data-testid="stAlert"] {{ border-radius:var(--sg-r); border:0; }}
