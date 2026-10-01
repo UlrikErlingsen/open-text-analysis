@@ -1,9 +1,18 @@
+# Copy to <repo>/.streamlit/config.toml and set primaryColor to the app's family (600 step).
+#   brand    #b2622d   Track, Position
+#   market   #728157   Prospect, Listen, Influence, Season, Adopt
+#   customer #aa5d83   Worth, Segment, Trace, Recommend
+#   research #a06f1f   Choice, Driver, Measure, Text, Tag
+#   decide   #4f80a2   Experiment, Gate, Alloc
+# signal_theme.apply() sets the same values in CSS; this file covers native widgets
+# (sliders, checkboxes, focus) and the first paint before the CSS loads.
+
 [theme]
 base = "light"
-primaryColor = "#D95B40"
-backgroundColor = "#F8F5ED"
-secondaryBackgroundColor = "#EEF2EB"
-textColor = "#17322E"
+primaryColor = "#a06f1f"
+backgroundColor = "#f5ead8"
+secondaryBackgroundColor = "#ebddc5"
+textColor = "#201e1d"
 font = "sans serif"
 
 [server]
@@ -13,3 +22,6 @@ fileWatcherType = "none"
 
 [browser]
 gatherUsageStats = false
+
+[client]
+toolbarMode = "viewer"
