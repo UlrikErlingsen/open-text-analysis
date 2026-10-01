@@ -1,4 +1,4 @@
-"""Corpus audit, privacy helpers, and bounded evidence-profile rules for TextSignal."""
+"""Corpus audit, privacy helpers, and bounded evidence-profile rules for Text Signal."""
 
 from __future__ import annotations
 

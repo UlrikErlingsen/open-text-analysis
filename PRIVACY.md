@@ -1,6 +1,6 @@
 # Privacy
 
-TextSignal is local-first. It includes no account system, telemetry SDK, advertising, remote database, external AI call, or
+Text Signal is local-first. It includes no account system, telemetry SDK, advertising, remote database, external AI call, or
 required API connection. Browser input is processed by the local Streamlit process unless the user hosts or moves it.
 
 Open text can contain names, contacts, health details, complaints, confidential plans, or unique stories. Remove direct and

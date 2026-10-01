@@ -1,0 +1,28 @@
+name: Feature request
+description: Suggest a useful improvement or analysis
+title: "[Idea]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem should Text Signal solve?
+      description: Start with the researcher or analyst's decision, not the proposed UI.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: What would a useful outcome look like?
+    validations:
+      required: true
+  - type: textarea
+    id: method
+    attributes:
+      label: Method or source
+      description: If this is a text-analysis or statistical method, link the published paper or authoritative reference.
+  - type: textarea
+    id: data
+    attributes:
+      label: Required input data
+      description: Describe columns or data shape using invented examples only.

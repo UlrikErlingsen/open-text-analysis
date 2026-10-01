@@ -47,7 +47,7 @@ def read_table(raw: bytes, filename: str) -> tuple[pd.DataFrame, dict[str, str]]
     if not raw:
         raise DataProblem("The uploaded file is empty.")
     if len(raw) > MAX_UPLOAD_BYTES:
-        raise DataProblem("The uploaded file exceeds TextSignal's 50 MB local safety limit.")
+        raise DataProblem("The uploaded file exceeds Text Signal's 50 MB local safety limit.")
     extension = Path(filename).suffix.casefold()
     if extension not in ALLOWED_EXTENSIONS:
         raise DataProblem("Use CSV, XLSX, JSON, or one-document-per-line TXT for response data.")
@@ -165,7 +165,7 @@ def build_evidence_pack(
         "schema": "textsignal.evidence.v1",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "generated_by": {
-            "product": "TextSignal",
+            "product": "Text Signal",
             "version": __version__,
             "python": platform.python_version(),
         },
@@ -213,7 +213,7 @@ def evidence_to_excel(pack: dict[str, object]) -> bytes:
     tables = pack.get("tables", {})
     flat_sections = {
         "Read me": {
-            "product": "TextSignal",
+            "product": "Text Signal",
             "schema": pack.get("schema"),
             "evidence_status": pack.get("evidence_status"),
             "privacy_note": pack.get("privacy_note"),

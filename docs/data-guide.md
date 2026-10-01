@@ -1,4 +1,4 @@
-# TextSignal data guide
+# Text Signal data guide
 
 ## Required unit
 
@@ -30,7 +30,7 @@ known templating, duplicate handling, and nonresponse. A model cannot repair a b
 
 ## Language and preprocessing
 
-The built-in stopword list is English. Do not enable it silently for another language. TextSignal does not detect language,
+The built-in stopword list is English. Do not enable it silently for another language. Text Signal does not detect language,
 stem, lemmatize, translate, or resolve negation. Multilingual analysis should use a declared, language-aware workflow and
 should check whether apparent topics merely separate languages.
 

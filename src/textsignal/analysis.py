@@ -1,4 +1,4 @@
-"""Transparent exploratory text analysis for TextSignal."""
+"""Transparent exploratory text analysis for Text Signal."""
 
 from __future__ import annotations
 
@@ -235,7 +235,7 @@ def _comparison_labels(frame: pd.DataFrame, nonblank_index: pd.Index, config: Te
     levels = sorted({str(label) for label in labels if label})
     if len(levels) > MAX_VARIANT_LEVELS:
         raise DataProblem(
-            f"The comparison column ‘{config.group}’ has {len(levels)} levels; TextSignal compares at most "
+            f"The comparison column ‘{config.group}’ has {len(levels)} levels; Text Signal compares at most "
             f"{MAX_VARIANT_LEVELS}. Consolidate related levels into up to {MAX_VARIANT_LEVELS} variants and rerun."
         )
     return labels, levels

@@ -1,4 +1,4 @@
-"""Entirely fictional deterministic data for TextSignal."""
+"""Entirely fictional deterministic data for Text Signal."""
 
 from __future__ import annotations
 

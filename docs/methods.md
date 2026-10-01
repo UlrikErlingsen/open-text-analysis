@@ -1,8 +1,8 @@
-# TextSignal methods
+# Text Signal methods
 
 ## Scope
 
-TextSignal is an exploratory lexical-evidence workflow. It asks whether recurring term patterns in a declared corpus are
+Text Signal is an exploratory lexical-evidence workflow. It asks whether recurring term patterns in a declared corpus are
 stable enough to inform a human coding pilot. It does not estimate latent meaning, emotional state, intent, truth,
 representativeness, or causality.
 
@@ -14,7 +14,7 @@ phone, and URL flags. These diagnostics expose corpus assembly problems; they do
 
 ## 2. TF–IDF matrix
 
-For term \(t\) in document \(d\), TextSignal uses scikit-learn's sublinear term frequency and smoothed inverse document
+For term \(t\) in document \(d\), Text Signal uses scikit-learn's sublinear term frequency and smoothed inverse document
 frequency:
 
 \[
@@ -34,7 +34,7 @@ X \approx WH,
 \]
 
 minimizing Frobenius reconstruction loss. Rows of \(W\) describe document-component weights; rows of \(H\) describe
-term weights. TextSignal uses coordinate descent, NNDSVDa initialization, and a fixed seed. The comparison table covers
+term weights. Text Signal uses coordinate descent, NNDSVDa initialization, and a fixed seed. The comparison table covers
 topic counts from 2 up to min(8, max(5, planned + 2)) — so a plan of 3 topics compares 2–5, and plans of 6 or more
 compare up to 8. It calls the components “topics” for usability, but they are lexical factors—not natural categories or
 validated themes. A solution that stops improving before scikit-learn's iteration cap is converged; if any fit reaches
@@ -51,7 +51,7 @@ of unique terms across each solution's top ten term lists.
 
 ## 4. Perturbation stability
 
-For every compared topic count, TextSignal:
+For every compared topic count, Text Signal:
 
 1. fits a full-corpus reference solution;
 2. samples 80% of documents without replacement;
@@ -123,9 +123,9 @@ statistical test is performed.
 
 The optional sentiment page applies the public VADER rule-based lexicon to each declared document and retains its compound score plus positive, neutral, and negative proportions in memory. It reports only aggregate trends, dimension comparisons, and validation tables. VADER was designed for social-media-style English and may not transfer to another language, domain, platform, brand vocabulary, irony pattern, or document length.
 
-When a human-label column is supplied, TextSignal maps the compound score to negative, neutral, or positive with declared VADER thresholds and reports a confusion matrix, per-class precision/recall/F1, balanced accuracy, and macro F1. The human labels are a local reference, not infallible truth. The status remains `UNVALIDATED LEXICON SIGNAL` without labels, becomes `VALIDATION LIMITED` when support is too thin, and only becomes `LOCALLY SUPPORTED` when the declared local diagnostics clear the product rules. Weak diagnostics produce `MODEL DOES NOT TRANSFER`.
+When a human-label column is supplied, Text Signal maps the compound score to negative, neutral, or positive with declared VADER thresholds and reports a confusion matrix, per-class precision/recall/F1, balanced accuracy, and macro F1. The human labels are a local reference, not infallible truth. The status remains `UNVALIDATED LEXICON SIGNAL` without labels, becomes `VALIDATION LIMITED` when support is too thin, and only becomes `LOCALLY SUPPORTED` when the declared local diagnostics clear the product rules. Weak diagnostics produce `MODEL DOES NOT TRANSFER`.
 
-Time, source, platform, and brand comparisons are descriptive conditional summaries. Voluntary reviews can overrepresent unusually positive or negative experiences; duplicated or syndicated reviews can overweight repeated language. TextSignal warns about both and makes no population or causal claim.
+Time, source, platform, and brand comparisons are descriptive conditional summaries. Voluntary reviews can overrepresent unusually positive or negative experiences; duplicated or syndicated reviews can overweight repeated language. Text Signal warns about both and makes no population or causal claim.
 
 ## 8. Context and human handoff
 

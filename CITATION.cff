@@ -1,6 +1,6 @@
 cff-version: 1.2.0
-message: "If you use TextSignal, please cite this software."
-title: "TextSignal"
+message: "If you use Text Signal, please cite this software."
+title: "Text Signal"
 type: software
 authors:
   - family-names: "Erlingsen"

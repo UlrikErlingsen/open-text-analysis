@@ -1,4 +1,4 @@
-"""Friendly domain errors for TextSignal."""
+"""Friendly domain errors for Text Signal."""
 
 
 class DataProblem(ValueError):
@@ -10,6 +10,6 @@ def friendly_message(exc: Exception) -> str:
     if isinstance(exc, DataProblem):
         return str(exc)
     if isinstance(exc, (KeyError, ValueError, TypeError)):
-        return f"TextSignal could not complete that request: {exc}"
-    return "TextSignal hit an unexpected problem. Check the data roles and try again."
+        return f"Text Signal could not complete that request: {exc}"
+    return "Text Signal hit an unexpected problem. Check the data roles and try again."
 

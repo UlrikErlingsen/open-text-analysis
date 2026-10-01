@@ -1,6 +1,6 @@
 # Contributing
 
-TextSignal welcomes reproducible bug reports, documentation improvements, analytical fixtures, and narrow pull requests.
+Text Signal welcomes reproducible bug reports, documentation improvements, analytical fixtures, and narrow pull requests.
 
 1. Explain the corpus shape and expected behavior without sharing private responses.
 2. Add deterministic tests for analytical changes.

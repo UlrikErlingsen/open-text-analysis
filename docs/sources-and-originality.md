@@ -1,6 +1,6 @@
 # Sources and originality
 
-TextSignal is an original software implementation of public text-analysis methods. The product structure, interface,
+Text Signal is an original software implementation of public text-analysis methods. The product structure, interface,
 prose, code, evidence-profile statuses, deterministic synthetic corpus, illustrations, and export schema were created for
 this project.
 
@@ -19,9 +19,9 @@ published prose, figures, examples, and tables are not reproduced.
 
 ## Originality boundary
 
-TextSignal is independently designed and written from the published text-analysis literature above. No lecture
+Text Signal is independently designed and written from the published text-analysis literature above. No lecture
 wording, narrative, slide design, diagram, screenshot, case, dataset, exercise, assessment material, solution, or
-institution branding appears in TextSignal. General topics encountered in education—content analysis, topic
+institution branding appears in Text Signal. General topics encountered in education—content analysis, topic
 modeling, lexical comparison, sentiment validation—only define the problem domain. The fictional decision-interface corpus is generated
 from original sentence components.
 
@@ -30,7 +30,7 @@ conditions, stability diagnostics, privacy-minimized exports, and a human codebo
 
 ## Claims intentionally excluded
 
-TextSignal does not claim that:
+Text Signal does not claim that:
 
 - a topic model discovers true themes;
 - high stability proves validity;
@@ -40,4 +40,4 @@ TextSignal does not claim that:
 - a codebook derived in one corpus generalizes elsewhere;
 - any institution or publication endorses the product.
 
-TextSignal is an independent member of the Signal suite created by Ulrik Erlingsen and is licensed AGPL-3.0-or-later.
+Text Signal is an independent member of the Signal suite created by Ulrik Erlingsen and is licensed AGPL-3.0-or-later.

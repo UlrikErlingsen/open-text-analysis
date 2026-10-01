@@ -1,0 +1,58 @@
+name: Bug report
+description: Something did not work as expected
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Text Signal. Never attach real open-text responses, respondent or customer data, credentials, or other sensitive information.
+  - type: dropdown
+    id: platform
+    attributes:
+      label: How are you running Text Signal?
+      options:
+        - Windows launcher
+        - macOS launcher
+        - Terminal
+        - Docker
+        - Signal Hub
+        - Hosted deployment
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: "1.2.0 or a commit SHA"
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include the page, action, expected result, and actual result.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open ...
+        2. Choose ...
+        3. Click ...
+    validations:
+      required: true
+  - type: textarea
+    id: safe_sample
+    attributes:
+      label: Safe sample data or error text
+      description: Use invented or anonymized text only.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed real responses, respondent or customer data, credentials, and other sensitive information.
+          required: true
