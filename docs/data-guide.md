@@ -39,6 +39,6 @@ them makes a preferred topic solution look cleaner. Preserve every choice in the
 
 ## Corpus size
 
-Version 1.1 requires at least `max(80, 20 × planned topics)` non-blank texts and at least 30 surviving terms for topic analysis. Those are
+Version 1.2 requires at least `max(80, 20 × planned topics)` non-blank texts and at least 30 surviving terms for topic analysis. Those are
 software guardrails, not guarantees of adequacy. Text length, lexical diversity, imbalance, templating, topic rarity,
 sampling, and the intended codebook use all matter.
