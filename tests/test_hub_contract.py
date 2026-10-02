@@ -171,6 +171,10 @@ def test_render_reads_no_repo_root_files(monkeypatch: pytest.MonkeyPatch) -> Non
     def from_repo_root(path: Path) -> bool:
         if root not in path.parents or package in path.parents:
             return False
+        # Libraries probe for files that don't exist (e.g. a search for src/pyproject.toml on CI runners) and read
+        # project config; neither is app data the UI depends on.
+        if not path.is_file() or path.name in {"pyproject.toml", "setup.cfg", "tox.ini"}:
+            return False
         # Streamlit's own config and installed-distribution metadata (importlib.metadata scans) are not app data.
         return ".streamlit" not in path.parts and not any(part.endswith((".egg-info", ".dist-info")) for part in path.parts)
 
