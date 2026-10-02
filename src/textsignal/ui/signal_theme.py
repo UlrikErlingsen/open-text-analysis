@@ -52,7 +52,7 @@ FAMILIES = {
     "decide":   {"label": "Decide",   "200": "#daeaf7", "300": "#b9d9f1", "600": "#4f80a2", "700": "#326384", "800": "#134766"},
 }
 
-# key: (prefix, family, repo, tagline)
+# key: (prefix, family, repo, tagline). Generated from signal-hub/apps.yaml by scripts/sync_suite.py.
 APPS = {
     "track":      ("Track", "brand", "brand-tracking", "Is the brand moving, or is the tracker just noisy?"),
     "position":   ("Position", "brand", "brand-positioning", "See where brands stand"),
@@ -72,6 +72,7 @@ APPS = {
     "tag":        ("Tag", "research", "pricing-analysis", "What price range is supported, and how does profit move?"),
     "experiment": ("Experiment", "decide", "experiment-analysis", "Did the treatment cause a change worth acting on?"),
     "gate":       ("Gate", "decide", "launch-decision-gate", "Know when the evidence deserves the next investment"),
+    "shift":      ("Shift", "decide", "cannibalization-analysis", "New demand, or demand moved around?"),
     "alloc":      ("Alloc", "decide", "marketing-mix-allocation", "Put the next budget where it works hardest"),
 }
 
