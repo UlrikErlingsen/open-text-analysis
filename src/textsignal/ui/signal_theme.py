@@ -12,7 +12,7 @@
     sig.footer("worth", __version__, "Customer-value estimates, not future truth")
 
 Design: Organic system (cream ground, dark warm sidebar, pill controls, soft circles),
-Figtree throughout with ExtraBold headings. One accent per app family.
+Figtree throughout with ExtraBold headings, embedded from signal_font.py (no Google Fonts request). One accent per app family.
 """
 
 from __future__ import annotations
@@ -21,6 +21,11 @@ from html import escape
 from pathlib import Path
 
 import streamlit as st
+
+try:  # inside an app package (src/<pkg>/ui/)
+    from .signal_font import FIGTREE_WOFF2_B64
+except ImportError:  # signal-theme/ itself (Signal Hub, tools)
+    from signal_font import FIGTREE_WOFF2_B64
 
 # ── Core tokens (Organic) ────────────────────────────────────────────────────
 CORE = {
@@ -94,10 +99,21 @@ def page_config(key: str, title_suffix: str | None = None) -> dict:
 
 
 # ── Chart palette ────────────────────────────────────────────────────────────
+# After the app's own family, the other families in contrast order: the second colour is always the hue furthest
+# from the first (Brand terracotta and Research ochre sit close together, so they are never neighbours up front).
+CONTRAST_ORDER = {
+    "brand":    ["decide", "market", "customer", "research"],
+    "market":   ["customer", "decide", "brand", "research"],
+    "customer": ["market", "decide", "research", "brand"],
+    "research": ["decide", "customer", "market", "brand"],
+    "decide":   ["brand", "market", "customer", "research"],
+}
+
+
 def colorway(key: str) -> list[str]:
-    """Categorical series: the app's own family first, then the other families, then neutral."""
+    """Categorical series: the app's own family first, then the others in contrast order, then neutral."""
     own = app(key)["family"]
-    order = [own] + [f for f in FAMILIES if f != own]
+    order = [own] + CONTRAST_ORDER[own]
     # Ten distinct hues: the five family 600s, then the five 800s, then neutral (for charts with many series).
     return [FAMILIES[f]["600"] for f in order] + [FAMILIES[f]["800"] for f in order] + [CORE["muted"]]
 
@@ -184,7 +200,8 @@ def _css(key: str) -> str:
     c = CORE
     return f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&display=swap');
+@font-face {{ font-family:'Figtree'; font-style:normal; font-weight:400 800; font-display:swap;
+  src:url(data:font/woff2;base64,{FIGTREE_WOFF2_B64}) format('woff2'); }}
 :root {{
   --sg-bg:{c['bg']}; --sg-surface:{c['surface']}; --sg-paper:{c['paper']}; --sg-text:{c['text']};
   --sg-muted:{c['muted']}; --sg-line:{c['line']}; --sg-side:{c['sidebar']};

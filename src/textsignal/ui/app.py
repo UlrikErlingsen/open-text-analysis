@@ -632,7 +632,7 @@ def render_topics() -> None:
     chart.add_trace(go.Scatter(x=comparison["topics"], y=comparison["mean_topic_stability"], mode="lines+markers",
                                name="Mean stability", line=dict(color=palette[0], width=3)))
     chart.add_trace(go.Scatter(x=comparison["topics"], y=comparison["minimum_topic_stability"], mode="lines+markers",
-                               name="Weakest topic", line=dict(color=palette[4], width=3)))
+                               name="Weakest topic", line=dict(color=palette[1], width=3)))
     chart.add_trace(go.Scatter(x=comparison["topics"], y=comparison["relative_reconstruction_error"], mode="lines+markers",
                                name="Relative error", line=dict(color=palette[2], width=3, dash="dot")))
     chart.add_vline(x=result.config.planned_topics, line_dash="dash", line_color=sig.CORE["muted"])
