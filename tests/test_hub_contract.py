@@ -180,7 +180,12 @@ def test_render_reads_no_repo_root_files(monkeypatch: pytest.MonkeyPatch) -> Non
 
     outside = sorted({str(path) for path in opened if from_repo_root(path)})
     assert not outside, outside
+    # The theme reads its mark from package data. Checked directly: on Python 3.10 pathlib keeps its own reference to
+    # io.open, so the spy above does not see Path.read_text calls.
+    from textsignal.ui import signal_theme
+
+    assert package in Path(signal_theme.ASSETS).resolve().parents
     marks = [path for path in opened if path.name == "textsignal-mark.svg"]
-    assert marks and all(package in path.parents for path in marks)  # the spy saw the theme's mark read
+    assert all(package in path.parents for path in marks)
     for name in ("textsignal-mark.svg", "textsignal-mark-32.png", "textsignal-mark-64.png"):
         assert (UI / "assets" / "marks" / name).exists()
