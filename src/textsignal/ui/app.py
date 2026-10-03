@@ -50,7 +50,7 @@ CAUTION = (
     "sentiment, population representation, causal explanation, and coding validity remain human research work."
 )
 DEMO_SOURCE_TYPE = "deterministic synthetic demonstration"
-RESULT_KEYS = ("audit", "analysis", "sentiment", "decision", "interpretation_register")
+RESULT_KEYS = ("audit", "analysis", "sentiment", "decision", "interpretation_register", "audit_signature")
 
 
 def full_width(widget, *args, **kwargs):
@@ -123,6 +123,10 @@ def require_contract() -> tuple[pd.DataFrame, dict[str, object]] | None:
 
 
 def ensure_audit(frame: pd.DataFrame, contract: dict[str, object]):
+    # The audit reads every document; reuse it for the same data and roles instead of repeating it on each rerun.
+    signature = (id(frame), frame.shape, contract.get("text_column"), contract.get("unit"), contract.get("group"))
+    if st.session_state.get(k("audit")) is not None and st.session_state.get(k("audit_signature")) == signature:
+        return st.session_state[k("audit")]
     audit = audit_corpus(
         frame,
         text_column=str(contract["text_column"]),
@@ -130,6 +134,7 @@ def ensure_audit(frame: pd.DataFrame, contract: dict[str, object]):
         group=contract.get("group") or None,
     )
     st.session_state[k("audit")] = audit
+    st.session_state[k("audit_signature")] = signature
     return audit
 
 
@@ -171,7 +176,7 @@ def render_welcome() -> None:
     )
     st.markdown("### A deliberately bounded release")
     st.write(
-        "Text Signal 1.2 analyzes English or deliberately preprocessed open-ended responses with TF–IDF, transparent "
+        "Text Signal 1.3 analyzes English or deliberately preprocessed open-ended responses with TF–IDF, transparent "
         "non-negative matrix factorization, perturbation stability, optional lexical contrast across two to six declared "
         "variants (symmetric for two, one-vs-rest for three to six), and optional "
         "sentiment tracking with local human-label validation. It does not treat lexicon sentiment as truth and does not perform language detection, embeddings, generative summarization, supervised "
@@ -449,7 +454,10 @@ def render_audit() -> None:
         "source. Context masking later in the workflow is not de-identification.",
     )
     if st.button("Run declared text analysis", type="primary", key=k("run_analysis")):
-        with st.spinner("Fitting topic solutions and stability repetitions — usually under a minute…"):
+        with st.spinner(
+            "Fitting topic solutions and stability repetitions — usually under a minute. Large corpora fit topics on a "
+            "50,000-document sample, then score every document (a few minutes for millions)…"
+        ):
             try:
                 st.session_state[k("analysis")] = analyze_text(frame, config_from_contract(contract))
                 st.session_state.pop(k("decision"), None)
@@ -556,7 +564,8 @@ def render_sentiment() -> None:
                 neutral_label=contract.get("neutral_label") or None,
                 voluntary_reviews=bool(contract.get("voluntary_reviews", False)),
             )
-            st.session_state[k("sentiment")] = analyze_sentiment(frame, config)
+            with st.spinner("Scoring every document with the fixed VADER lexicon (about a minute per million)…"):
+                st.session_state[k("sentiment")] = analyze_sentiment(frame, config)
             st.success("Sentiment scoring complete. Read validation before reading trends.")
         except Exception as exc:
             show_error(exc)
@@ -811,10 +820,17 @@ def _sidebar() -> str:
             st.rerun()
         upload = st.file_uploader("Or upload local data", type=["csv", "xlsx", "json", "txt"], key=k("upload"))
         if upload is not None:
-            fingerprint = hashlib.sha256(upload.getvalue()).hexdigest()
+            # The uploader keeps its file across reruns; skip re-hashing a large unchanged upload each time.
+            token = (getattr(upload, "file_id", None), upload.name, getattr(upload, "size", None))
+            if token[0] is not None and token == st.session_state.get(k("upload_token")):
+                fingerprint = st.session_state.get(k("upload_fingerprint"))
+            else:
+                raw = upload.getvalue()
+                fingerprint = hashlib.sha256(raw).hexdigest()
+                st.session_state[k("upload_token")] = token
             if st.session_state.get(k("upload_fingerprint")) != fingerprint:
                 try:
-                    frame, source = read_table(upload.getvalue(), upload.name)
+                    frame, source = read_table(raw, upload.name)
                     source["source_type"] = "local upload"
                     st.session_state[k("data")] = frame
                     st.session_state[k("source")] = source

@@ -13,4 +13,5 @@ if not exist .venv\.textsignal-requirements-%REQ_HASH% (
   type nul > .venv\.textsignal-requirements-%REQ_HASH%
 )
 if not defined TEXTSIGNAL_PORT set TEXTSIGNAL_PORT=8600
-python -m streamlit run app.py --server.headless=false --server.address=127.0.0.1 --server.port=%TEXTSIGNAL_PORT% --server.maxUploadSize=50 --server.fileWatcherType=none --browser.gatherUsageStats=false
+if not defined TEXTSIGNAL_MAX_UPLOAD_MB set TEXTSIGNAL_MAX_UPLOAD_MB=10000
+python -m streamlit run app.py --server.headless=false --server.address=127.0.0.1 --server.port=%TEXTSIGNAL_PORT% --server.maxUploadSize=%TEXTSIGNAL_MAX_UPLOAD_MB% --server.fileWatcherType=none --browser.gatherUsageStats=false

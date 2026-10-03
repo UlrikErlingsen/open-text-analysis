@@ -51,6 +51,12 @@ of unique terms across each solution's top ten term lists.
 
 ## 4. Perturbation stability
 
+Above 50,000 non-blank documents, the steps below and the planned-topic model are fitted on a seeded random sample of
+50,000 documents, and the vocabulary is learned from that sample. Every document is then streamed in chunks through the
+fitted vocabulary (raw counts, then the same sublinear TF-IDF) and the fitted NMF topics, so topic shares, prevalence,
+ambiguity, variant prevalence, the vocabulary table and keyness counts cover the whole corpus. The diagnostics record the
+basis (`topic_model_basis`, `scored_documents`).
+
 For every compared topic count, Text Signal:
 
 1. fits a full-corpus reference solution;

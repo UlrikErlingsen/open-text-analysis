@@ -52,11 +52,19 @@ def test_runtime_scaffolding_is_private_and_health_checked() -> None:
     config = (ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8")
     dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
     launcher = (ROOT / "run_app.command").read_text(encoding="utf-8")
+    windows_launcher = (ROOT / "run_app.bat").read_text(encoding="utf-8")
     workflow = (ROOT / ".github" / "workflows" / "tests.yml").read_text(encoding="utf-8")
 
     assert "gatherUsageStats = false" in config
     assert 'base = "light"' in config
     assert 'primaryColor = "#a06f1f"' in config  # Signal Research family, 600 step
+    # Streamlit's upload cap: 10,000 MB (Signal Hub's apps.yaml), the same default in both launchers and Docker.
+    assert "maxUploadSize = 10000" in config
+    assert 'MAX_UPLOAD_MB="${TEXTSIGNAL_MAX_UPLOAD_MB:-10000}"' in launcher
+    assert "set TEXTSIGNAL_MAX_UPLOAD_MB=10000" in windows_launcher
+    assert "--server.maxUploadSize=%TEXTSIGNAL_MAX_UPLOAD_MB%" in windows_launcher
+    assert "STREAMLIT_SERVER_MAX_UPLOAD_SIZE=10000" in dockerfile
+    assert "--server.maxUploadSize" not in dockerfile
     assert "USER textsignal" in dockerfile
     assert "HEALTHCHECK" in dockerfile
     assert "chown" not in dockerfile

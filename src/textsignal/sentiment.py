@@ -148,20 +148,27 @@ def analyze_sentiment(frame: pd.DataFrame, config: SentimentConfig) -> Sentiment
     if int(nonblank.sum()) < 20:
         raise DataProblem("Sentiment tracking requires at least 20 non-blank documents.")
     analyzer = SentimentIntensityAnalyzer()
-    rows = []
-    for index, text in texts[nonblank].items():
+    scored_texts = texts[nonblank]
+    # Every document is scored; identical texts ("Good", "N/A", templates) are scored once and share the result.
+    codes, distinct = pd.factorize(scored_texts)
+    distinct_scores = np.empty((len(distinct), 4), dtype=float)
+    for position, text in enumerate(distinct):
         values = analyzer.polarity_scores(text)
-        rows.append(
-            {
-                "source_row": index,
-                "negative": float(values["neg"]),
-                "neutral": float(values["neu"]),
-                "positive": float(values["pos"]),
-                "compound": float(values["compound"]),
-                "lexicon_label": _predicted_label(float(values["compound"]), binary=False),
-            }
-        )
-    scores = pd.DataFrame(rows)
+        distinct_scores[position] = (values["neg"], values["neu"], values["pos"], values["compound"])
+    per_document = distinct_scores[codes]
+    compound = per_document[:, 3]
+    scores = pd.DataFrame(
+        {
+            "source_row": scored_texts.index,
+            "negative": per_document[:, 0],
+            "neutral": per_document[:, 1],
+            "positive": per_document[:, 2],
+            "compound": compound,
+            "lexicon_label": np.where(
+                compound >= 0.05, "positive", np.where(compound <= -0.05, "negative", "neutral")
+            ).astype(object),
+        }
+    )
     overall = pd.DataFrame([{"scope": "all usable documents", **_summary(scores["compound"])}])
 
     time_summary = pd.DataFrame()

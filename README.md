@@ -37,7 +37,7 @@ Everything runs locally with open-source Python packages. There is no account, t
 
 ## Scope
 
-**Version 1.2 supports:**
+**Version 1.3 supports:**
 
 - CSV, XLSX, JSON, and one-document-per-line TXT import;
 - one open-text column, optional document ID, and an optional comparison column with 2–6 levels;
@@ -75,7 +75,7 @@ The demo is deterministic synthetic data. It represents no real respondent, orga
 
 ## Data contract
 
-One row represents one declared document: for example, one complete open-ended survey answer. CSV, XLSX (first worksheet; macros are never executed), JSON (an array of row objects, or an object with a `data` array), and TXT are supported, up to 50 MB, 250,000 rows, and 500 columns.
+One row represents one declared document: for example, one complete open-ended survey answer. CSV, XLSX (first worksheet; macros are never executed), JSON (an array of row objects, or an object with a `data` array), and TXT are supported; see [Data limits](#data-limits) for sizes.
 
 Wide table:
 
@@ -112,7 +112,7 @@ friction improves evidence:
 5. Read high-weight examples in best-effort masked context and record rival interpretations.
 6. Export aggregate evidence, then test a frozen codebook with blinded human coders on held-out or new text.
 
-The engine estimates Unicode-normalized tokens, document frequency, sublinear TF–IDF and vocabulary coverage; NMF lexical components for each compared topic count; topic stability from repeated 80% document perturbations aligned to the full-corpus components with the Hungarian algorithm; and informative-Dirichlet smoothed log odds with approximate z scores. Optional sentiment uses the fixed VADER rule, aggregated by declared time and comparison fields, and is checked against local human labels. Topic analysis is withheld below the corpus-size guardrails.
+The engine estimates Unicode-normalized tokens, document frequency, sublinear TF–IDF and vocabulary coverage; NMF lexical components for each compared topic count; topic stability from repeated 80% document perturbations aligned to the full-corpus (above 50,000 documents, full-sample) components with the Hungarian algorithm; and informative-Dirichlet smoothed log odds with approximate z scores. Optional sentiment uses the fixed VADER rule, aggregated by declared time and comparison fields, and is checked against local human labels. Topic analysis is withheld below the corpus-size guardrails.
 
 See [methods](docs/methods.md).
 
@@ -157,7 +157,7 @@ python -m streamlit run app.py --server.port=8600
 ```
 
 Text Signal prefers local port `8600`. The macOS launcher can fall back to a free port and accepts
-`TEXTSIGNAL_PORT`, `TEXTSIGNAL_MAX_UPLOAD_MB`, `TEXTSIGNAL_NO_BROWSER`, and `TEXTSIGNAL_DEBUG`.
+`TEXTSIGNAL_PORT`, `TEXTSIGNAL_MAX_UPLOAD_MB` (Streamlit's upload cap in MB, default 10000; the Windows launcher honours it too), `TEXTSIGNAL_NO_BROWSER`, and `TEXTSIGNAL_DEBUG`.
 
 ### Docker
 
@@ -166,7 +166,17 @@ docker build -t textsignal .
 docker run --rm -p 8600:8600 textsignal
 ```
 
-Then open http://127.0.0.1:8600. The container runs as a non-root user and includes a health check.
+Then open http://127.0.0.1:8600. The container runs as a non-root user and includes a health check. Its upload cap is `STREAMLIT_SERVER_MAX_UPLOAD_SIZE` (MB, default 10000). For a public demo, also set `SIGNAL_PUBLIC=1` to apply the demo limits, e.g. `docker run -e SIGNAL_PUBLIC=1 -e STREAMLIT_SERVER_MAX_UPLOAD_SIZE=50 ...`.
+
+## Data limits
+
+Run locally (standalone, inside a local Signal Hub, or on an internal company server), Text Signal has **no built-in limit** on file size, documents, or columns: the computer's memory is the limit, and running out of memory produces a plain message instead of a crash. Streamlit's upload cap defaults to 10,000 MB (`TEXTSIGNAL_MAX_UPLOAD_MB`; `STREAMLIT_SERVER_MAX_UPLOAD_SIZE` in Docker). CSV is the fastest format.
+
+The audit, the vocabulary table, keyness, topic shares, prevalence, ambiguity, and sentiment cover every document. One compute-heavy step samples, and says so in the warnings, diagnostics (`topic_model_basis`), and evidence pack: above 50,000 non-blank documents, the vocabulary, topic-count comparison, perturbation stability, and topic model are fitted on a seeded random sample of 50,000 documents (dozens of NMF fits on millions of rows would take hours); every document is then scored in chunks with the fitted vocabulary and topics, so the document-term matrix is never held whole. Identical texts are sentiment-scored once.
+
+On the development laptop a 5,000,000-document, 638 MB CSV loaded in about 9 seconds (1.4 GB in memory); the audit took about 46 seconds, the topic analysis about 2 minutes, and VADER sentiment for all documents about 5.5 minutes, at under 5 GB peak memory.
+
+A public online demo (`SIGNAL_PUBLIC=1`, set by Signal Hub's public image) applies demo limits instead: 50 MB uploads, 250,000 rows, and 500 columns. The downloaded app has none of them.
 
 ## Privacy
 

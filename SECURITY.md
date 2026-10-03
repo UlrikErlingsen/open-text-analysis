@@ -2,7 +2,9 @@
 
 Report suspected vulnerabilities privately to the repository owner; do not include sensitive source text in a public issue.
 
-Text Signal reads CSV, XLSX, JSON, and TXT up to 50 MB, applies row/column limits, never executes workbook macros, and
+Run locally, Text Signal has no built-in size limit on CSV, XLSX, JSON, and TXT (Streamlit's upload cap is
+`TEXTSIGNAL_MAX_UPLOAD_MB`, or `STREAMLIT_SERVER_MAX_UPLOAD_SIZE` in Docker, default 10,000 MB); any shared or public deployment
+should set `SIGNAL_PUBLIC=1`, which applies upload, row and column caps. It never executes workbook macros, and
 neutralizes spreadsheet-formula prefixes in exports. Aggregate evidence excludes raw text and row assignments.
 
 These controls do not create a hardened multi-tenant service. Internet hosting requires authentication, TLS, authorization,

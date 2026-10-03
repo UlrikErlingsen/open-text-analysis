@@ -16,45 +16,74 @@ import numpy as np
 import pandas as pd
 
 from . import __version__
-from .errors import DataProblem
+from .errors import MEMORY_MESSAGE, DataProblem
+from .limits import check_table_shape, check_upload_bytes
 
 
-MAX_UPLOAD_BYTES = 50 * 1024 * 1024
-MAX_ROWS = 250_000
-MAX_COLUMNS = 500
+# Locally there is no size, row or column limit (memory is the limit); a public demo (SIGNAL_PUBLIC=1) applies the
+# caps in limits.py. CSV is read in chunks so a demo cap stops early and numbers are stored compactly.
+CSV_CHUNK_ROWS = 250_000
 ALLOWED_EXTENSIONS = {".csv", ".xlsx", ".json", ".txt"}
 
 
 def _validate_shape(frame: pd.DataFrame) -> pd.DataFrame:
     if frame.empty:
         raise DataProblem("The uploaded table has no data rows.")
-    if len(frame) > MAX_ROWS:
-        raise DataProblem(f"This release accepts at most {MAX_ROWS:,} rows per analysis.")
-    if len(frame.columns) > MAX_COLUMNS:
-        raise DataProblem(f"This release accepts at most {MAX_COLUMNS:,} columns.")
+    check_table_shape(len(frame), len(frame.columns))
     names = [str(column).strip() for column in frame.columns]
     if any(not name for name in names):
         raise DataProblem("Every column needs a non-empty name.")
     if len(names) != len(set(names)):
         raise DataProblem("Column names must be unique.")
-    frame = frame.copy()
+    # The frame was created by read_table, so it is renamed in place instead of copied.
     frame.columns = names
     return frame
+
+
+def compact_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    """Store numbers in the smallest lossless dtype, in place; text columns are left as they are."""
+    for column in frame.columns:
+        series = frame[column]
+        kind = series.dtype.kind
+        if kind in "iu":
+            frame[column] = pd.to_numeric(series, downcast="integer")
+        elif kind == "f" and series.dtype.itemsize > 4:
+            values = series.to_numpy()
+            narrow = values.astype(np.float32)
+            if np.array_equal(narrow.astype(values.dtype), values, equal_nan=True):
+                frame[column] = narrow
+    return frame
+
+
+def _read_csv(raw: bytes) -> pd.DataFrame:
+    chunks: list[pd.DataFrame] = []
+    rows = 0
+    with pd.read_csv(BytesIO(raw), chunksize=CSV_CHUNK_ROWS) as reader:
+        for chunk in reader:
+            rows += len(chunk)
+            check_table_shape(rows, len(chunk.columns))
+            chunks.append(compact_frame(chunk))
+    if not chunks:
+        raise DataProblem("The uploaded table has no data rows.")
+    if len(chunks) == 1:
+        return chunks[0]
+    frame = pd.concat(chunks, ignore_index=True)
+    chunks.clear()
+    return compact_frame(frame)
 
 
 def read_table(raw: bytes, filename: str) -> tuple[pd.DataFrame, dict[str, str]]:
     """Read one CSV, XLSX, JSON, or one-document-per-line TXT source."""
     if not raw:
         raise DataProblem("The uploaded file is empty.")
-    if len(raw) > MAX_UPLOAD_BYTES:
-        raise DataProblem("The uploaded file exceeds Text Signal's 50 MB local safety limit.")
+    check_upload_bytes(len(raw))
     extension = Path(filename).suffix.casefold()
     if extension not in ALLOWED_EXTENSIONS:
         raise DataProblem("Use CSV, XLSX, JSON, or one-document-per-line TXT for response data.")
     sheet = ""
     try:
         if extension == ".csv":
-            frame = pd.read_csv(BytesIO(raw))
+            frame = _read_csv(raw)
         elif extension == ".xlsx":
             book = pd.ExcelFile(BytesIO(raw), engine="openpyxl")
             if not book.sheet_names:
@@ -78,6 +107,8 @@ def read_table(raw: bytes, filename: str) -> tuple[pd.DataFrame, dict[str, str]]
             )
     except DataProblem:
         raise
+    except MemoryError as exc:
+        raise DataProblem(MEMORY_MESSAGE) from exc
     except Exception as exc:
         raise DataProblem(f"The {extension[1:].upper()} file could not be read as a rectangular table.") from exc
     return _validate_shape(frame), {

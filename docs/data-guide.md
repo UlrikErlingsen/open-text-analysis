@@ -39,6 +39,8 @@ them makes a preferred topic solution look cleaner. Preserve every choice in the
 
 ## Corpus size
 
-Version 1.2 requires at least `max(80, 20 × planned topics)` non-blank texts and at least 30 surviving terms for topic analysis. Those are
+Version 1.3 requires at least `max(80, 20 × planned topics)` non-blank texts and at least 30 surviving terms for topic analysis. Those are
 software guardrails, not guarantees of adequacy. Text length, lexical diversity, imbalance, templating, topic rarity,
-sampling, and the intended codebook use all matter.
+sampling, and the intended codebook use all matter. There is no upper limit when the app runs locally: above 50,000
+non-blank documents the topic model is fitted on a seeded random sample of 50,000 and every document is then scored
+(a public online demo, `SIGNAL_PUBLIC=1`, caps uploads at 50 MB, 250,000 rows, and 500 columns).

@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.3.0 — 2026-10-03
+
+### Larger datasets
+
+- Larger datasets: run locally, Text Signal has no built-in limit on file size, documents or columns (was 50 MB, 250,000 rows and 500 columns); memory is the limit, and running out of memory gives a plain message. A public demo (`SIGNAL_PUBLIC=1`) keeps those values as demo limits, all in the new `textsignal.limits` module, with messages that say the downloaded app has none.
+- Above 50,000 non-blank documents the vocabulary, topic-count comparison, perturbation stability and topic model are fitted on a seeded random sample of 50,000; every document is then scored in 100,000-document chunks with the fitted vocabulary and topics, so topic shares, prevalence, ambiguity, keyness and the vocabulary table cover the whole corpus and the document-term matrix is never held whole. A warning and the diagnostics (`topic_model_basis`, `scored_documents`) record it. Smaller corpora give identical results to 1.2 (raw counts are now computed once per analysis instead of up to three times).
+- Text normalization keeps its rule but takes fast paths (unescape only with `&`, NFKC only for non-ASCII text, `str.split` for spacing; about 3.5x faster), and the contact screen scans each chunk of documents once for cheap necessary conditions before running the full patterns (same flags, about 3.5x faster). Sentiment scores identical texts once. At 5,000,000 documents: audit about 46 s, topics about 2 min, sentiment about 5.5 min.
+- CSV is read in 250,000-row chunks with numbers stored in the smallest lossless type; uploaded frames are no longer copied once more. The app keeps the corpus audit for the same data and roles, skips re-hashing an unchanged upload, and shows spinners for the long steps.
+- Launchers default `TEXTSIGNAL_MAX_UPLOAD_MB` to 10000 (the Windows launcher now honours it), and the Docker image sets `STREAMLIT_SERVER_MAX_UPLOAD_SIZE=10000`. Signal Hub mode (`SIGNAL_HUB=1`) is unchanged.
+
+### Suite
+
+- Suite: Rival, Reach, Learn and Blueprint Signal added to the suite table (README) and to the theme copy's app list; `.streamlit/config.toml` carries Signal Hub's 10,000 MB upload cap.
+
 ## 1.2.0 — 2026-10-02
 
 Signal brand refresh and Signal Hub entry point. The analysis, statistics, data contract and export schema are unchanged.

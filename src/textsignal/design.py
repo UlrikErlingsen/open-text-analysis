@@ -17,6 +17,11 @@ TOKEN_RE = re.compile(r"(?u)\b[^\W\d_][\w'-]{1,}\b")
 EMAIL_RE = re.compile(r"(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b")
 URL_RE = re.compile(r"(?i)\b(?:https?://|www\.)\S+\b")
 PHONE_RE = re.compile(r"(?<!\w)(?:\+?\d[\d .()/-]{6,}\d)(?!\w)")
+# Necessary conditions for the three screens, cheap to scan for in a whole chunk of documents at once. Only the
+# documents they hit are checked with the full patterns, so millions of documents audit in seconds.
+PHONE_PREFILTER_RE = re.compile(r"\d[\d .()/-]{6,}\d")
+URL_PREFILTER_RE = re.compile(r"(?i)www\.|://")
+AUDIT_CHUNK_DOCUMENTS = 100_000
 
 
 @dataclass(frozen=True)
@@ -28,11 +33,21 @@ class CorpusAudit:
 
 
 def normalize_text(value: object) -> str:
-    """Normalize Unicode, HTML entities, and whitespace without inventing content."""
+    """Normalize Unicode, HTML entities, and whitespace without inventing content.
+
+    Equivalent to ``re.sub(r"\\s+", " ", NFKC(html.unescape(str(value)))).strip()``, with fast paths: unescaping
+    only when ``&`` occurs, NFKC only for non-ASCII text (ASCII is NFKC-stable), and ``str.split`` (the same
+    whitespace definition as ``\\s``) for the spacing. An unchanged text keeps its original string object.
+    """
     if value is None or (isinstance(value, float) and np.isnan(value)):
         return ""
-    text = unicodedata.normalize("NFKC", html.unescape(str(value)))
-    return re.sub(r"\s+", " ", text).strip()
+    text = value if isinstance(value, str) else str(value)
+    if "&" in text:
+        text = html.unescape(text)
+    if not text.isascii():
+        text = unicodedata.normalize("NFKC", text)
+    joined = " ".join(text.split())
+    return text if joined == text else joined
 
 
 def prepare_texts(frame: pd.DataFrame, text_column: str) -> pd.Series:
@@ -54,6 +69,40 @@ def _sensitive_flags(text: str) -> tuple[bool, bool, bool]:
     return bool(EMAIL_RE.search(text)), bool(PHONE_RE.search(text)), bool(URL_RE.search(text))
 
 
+def _sensitive_flag_arrays(texts: list[str]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Email, phone and URL flags per document, identical to ``_sensitive_flags`` on each text.
+
+    Documents are joined per chunk with newlines (normalized text contains none, and no pattern can cross one);
+    cheap necessary-condition scans find candidate documents, and only those run the full patterns.
+    """
+    email = np.zeros(len(texts), dtype=bool)
+    phone = np.zeros(len(texts), dtype=bool)
+    url = np.zeros(len(texts), dtype=bool)
+    for offset in range(0, len(texts), AUDIT_CHUNK_DOCUMENTS):
+        block = texts[offset : offset + AUDIT_CHUNK_DOCUMENTS]
+        joined = "\n".join(block)
+        lengths = np.fromiter((len(text) + 1 for text in block), dtype=np.int64, count=len(block))
+        starts = np.cumsum(lengths) - lengths
+
+        def candidates(positions: list[int]) -> np.ndarray:
+            if not positions:
+                return np.empty(0, dtype=np.int64)
+            return np.unique(np.searchsorted(starts, np.asarray(positions, dtype=np.int64), side="right") - 1)
+
+        at_signs: list[int] = []
+        position = joined.find("@")
+        while position != -1:
+            at_signs.append(position)
+            position = joined.find("@", position + 1)
+        for document in candidates(at_signs):
+            email[offset + document] = bool(EMAIL_RE.search(block[document]))
+        for document in candidates([match.start() for match in PHONE_PREFILTER_RE.finditer(joined)]):
+            phone[offset + document] = bool(PHONE_RE.search(block[document]))
+        for document in candidates([match.start() for match in URL_PREFILTER_RE.finditer(joined)]):
+            url[offset + document] = bool(URL_RE.search(block[document]))
+    return email, phone, url
+
+
 def audit_corpus(
     frame: pd.DataFrame,
     *,
@@ -64,22 +113,23 @@ def audit_corpus(
     """Audit document availability, length, duplication, grouping, and obvious identifiers."""
     if frame.empty:
         raise DataProblem("The dataset has no rows.")
-    if len(frame) > 250_000:
-        raise DataProblem("Version 1.0 accepts at most 250,000 source rows.")
     texts = prepare_texts(frame, text_column)
     nonblank = texts.ne("")
     analyzable = texts[nonblank]
     if analyzable.empty:
         raise DataProblem("The selected column contains no non-blank text.")
 
-    word_counts = analyzable.map(lambda text: len(TOKEN_RE.findall(text)))
+    word_counts = pd.Series(
+        np.fromiter((len(TOKEN_RE.findall(text)) for text in analyzable), dtype=np.int64, count=len(analyzable)),
+        index=analyzable.index,
+    )
     character_counts = analyzable.str.len()
     duplicated = analyzable.duplicated(keep=False)
     duplicate_sets = int(analyzable[duplicated].nunique())
-    sensitive = analyzable.map(_sensitive_flags)
-    email_docs = int(sensitive.map(lambda flags: flags[0]).sum())
-    phone_docs = int(sensitive.map(lambda flags: flags[1]).sum())
-    url_docs = int(sensitive.map(lambda flags: flags[2]).sum())
+    email_flags, phone_flags, url_flags = _sensitive_flag_arrays(analyzable.tolist())
+    email_docs = int(email_flags.sum())
+    phone_docs = int(phone_flags.sum())
+    url_docs = int(url_flags.sum())
 
     duplicate_unit_rows = 0
     missing_unit_rows = 0
