@@ -17,7 +17,7 @@ font = "sans serif"
 
 [server]
 headless = true
-maxUploadSize = 50
+maxUploadSize = 1000
 fileWatcherType = "none"
 
 [browser]
