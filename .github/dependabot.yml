@@ -1,6 +1,17 @@
+# Synced from signal-hub by scripts/sync_suite.py. Edit signal-theme/app-template/.github/dependabot.yml there.
 version: 2
 updates:
   - package-ecosystem: pip
     directory: "/"
     schedule:
       interval: monthly
+    # Only propose a change when a new release falls outside the allowed range (e.g. a new major version). Raising
+    # lower bounds that already allow the latest version helps nobody, and on the Python 3.10 floor it made the
+    # updater fail with "Expected content to change!".
+    versioning-strategy: increase-if-necessary
+    open-pull-requests-limit: 5
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
